@@ -9,24 +9,42 @@
             --accent: #008cff;
             --accent-glow: rgba(0, 140, 255, 0.4);
             --bg: #020202;
-            --glass: rgba(10, 10, 10, 0.7);
+            --glass: rgba(10, 10, 10, 0.8);
         }
 
         body, html {
-            margin: 0;
-            padding: 0;
-            width: 100%;
-            height: 100%;
+            margin: 0; padding: 0;
+            width: 100%; height: 100%;
             background-color: var(--bg);
             color: white;
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            font-family: 'Inter', sans-serif;
             display: flex;
             align-items: center;
             justify-content: center;
             overflow: hidden;
         }
 
-        /* FONDO ANIMADO PRO */
+        /* SELECTOR INICIAL */
+        #device-selector {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--bg);
+            z-index: 2000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+
+        /* INTERFAZ PRINCIPAL (Oculta al inicio) */
+        #main-app { display: none; width: 100%; height: 100%; }
+
+        /* ESTILOS DE PC VS MÓVIL */
+        .mode-pc .container { max-width: 1200px; }
+        .mode-mobile .container { max-width: 400px; padding: 20px; }
+        .mode-mobile .logo { font-size: 4rem; }
+
         .bg-animate {
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -45,77 +63,45 @@
             mask-image: radial-gradient(ellipse at center, black, transparent 80%);
         }
 
-        .container {
-            text-align: center;
-            z-index: 10;
-        }
+        .container { text-align: center; z-index: 10; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; }
 
-        /* LOGO ANX */
         .logo {
             font-size: clamp(4rem, 15vw, 7rem);
             font-weight: 900;
             letter-spacing: -5px;
             color: #fff;
-            margin: 0;
-            position: relative;
-            display: inline-block;
             filter: drop-shadow(0 0 15px var(--accent-glow));
         }
 
-        .logo span {
-            color: var(--accent);
-        }
+        .logo span { color: var(--accent); }
 
         .welcome-text {
             font-size: 1rem;
             color: #aaa;
-            margin-top: -10px;
             margin-bottom: 40px;
             text-transform: uppercase;
             letter-spacing: 5px;
-            font-weight: 300;
         }
 
-        /* BOTONES APP PRO */
-        .btn-group {
-            display: flex;
-            gap: 20px;
-            justify-content: center;
-        }
+        .btn-group { display: flex; gap: 20px; justify-content: center; flex-wrap: wrap; }
 
         .btn {
             padding: 16px 35px;
             border-radius: 12px;
             font-weight: 600;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: 0.3s;
             text-decoration: none;
             font-size: 0.9rem;
             text-transform: uppercase;
-            letter-spacing: 1px;
             border: 1px solid rgba(255,255,255,0.1);
         }
 
-        .btn-outline {
-            color: #fff;
-            background: rgba(255,255,255,0.03);
-            backdrop-filter: blur(5px);
-        }
+        .btn-outline { color: #fff; background: rgba(255,255,255,0.03); backdrop-filter: blur(5px); }
+        .btn-primary { background: var(--accent); color: white; border: none; box-shadow: 0 4px 15px var(--accent-glow); }
+        .btn:hover { transform: translateY(-3px); box-shadow: 0 0 25px var(--accent-glow); border-color: var(--accent); }
 
-        .btn-primary {
-            background: var(--accent);
-            color: white;
-            border: none;
-            box-shadow: 0 4px 15px var(--accent-glow);
-        }
-
-        .btn:hover {
-            transform: translateY(-3px);
-            border-color: var(--accent);
-            box-shadow: 0 0 25px var(--accent-glow);
-        }
-
-        /* MODAL GLASSMORPISM */
+        /* MODAL */
         .modal-overlay {
             display: none;
             position: fixed;
@@ -129,91 +115,90 @@
 
         .modal-box {
             background: var(--glass);
-            padding: 50px 40px;
+            padding: 40px;
             border-radius: 30px;
             border: 1px solid rgba(255,255,255,0.1);
             width: 90%;
             max-width: 380px;
-            box-shadow: 0 25px 50px rgba(0,0,0,0.5);
         }
 
         input {
-            width: 100%;
-            padding: 15px;
-            margin: 12px 0;
+            width: 100%; padding: 15px; margin: 12px 0;
             background: rgba(255,255,255,0.05);
             border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 12px;
-            color: white;
-            outline: none;
-            transition: 0.3s;
+            border-radius: 12px; color: white; outline: none;
         }
 
-        input:focus {
-            border-color: var(--accent);
-            background: rgba(255,255,255,0.08);
-        }
-
-        .btn-block { width: 100%; margin-top: 15px; border: none; }
-
-        .fade-in { animation: fadeIn 1.2s cubic-bezier(0.22, 1, 0.36, 1); }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+        .fade-in { animation: fadeIn 1.2s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body>
 
-    <div class="bg-animate"></div>
-    <div class="bg-mesh"></div>
-
-    <div class="container fade-in">
-        <h1 class="logo">AN<span>X</span></h1>
-        <p class="welcome-text">Bienvenido al anexo</p>
-        
+    <div id="device-selector">
+        <h2 style="letter-spacing: 2px; color: #fff;">IDENTIFICA TU PLATAFORMA</h2>
+        <p style="color: #666; margin-bottom: 30px;">Optimización de interfaz requerida</p>
         <div class="btn-group">
-            <a href="#" class="btn btn-outline" onclick="alert('Iniciando exploración...')">Explorar</a>
-            <a href="#" class="btn btn-primary" onclick="toggleModal(true)">Entrar</a>
+            <div class="btn btn-outline" onclick="setMode('mobile')">📱 MÓVIL</div>
+            <div class="btn btn-outline" onclick="setMode('pc')">💻 ORDENADOR</div>
+        </div>
+    </div>
+
+    <div id="main-app">
+        <div class="bg-animate"></div>
+        <div class="bg-mesh"></div>
+
+        <div class="container fade-in">
+            <h1 class="logo">AN<span>X</span></h1>
+            <p class="welcome-text">Bienvenido al anexo</p>
+            
+            <div class="btn-group">
+                <a href="#" class="btn btn-outline" onclick="alert('Exploración activa...')">Explorar</a>
+                <a href="#" class="btn btn-primary" onclick="toggleModal(true)">Entrar</a>
+            </div>
         </div>
     </div>
 
     <div id="modal" class="modal-overlay" onclick="closeOutside(event)">
-        <div class="modal-box fade-in">
-            <h2 id="mTitle" style="margin-top:0; font-weight: 800; letter-spacing: -1px;">ACCESO</h2>
+        <div class="modal-box">
+            <h2 id="mTitle" style="margin-top:0;">ACCESO</h2>
             <input type="email" id="email" placeholder="Usuario o Email">
             <input type="password" id="pass" placeholder="Contraseña">
-            <button class="btn btn-primary btn-block" onclick="authAction()">Conectar</button>
-            <p id="mSwitch" style="font-size:0.75rem; color:#666; margin-top:25px; cursor:pointer; text-align:center" onclick="switchMode()">
-                ¿Nuevo aquí? <span style="color:var(--accent)">Crea una identidad</span>
+            <button class="btn btn-primary" style="width:100%; margin-top:10px;" onclick="authAction()">Conectar</button>
+            <p id="mSwitch" style="font-size:0.75rem; color:#666; margin-top:20px; cursor:pointer; text-align:center" onclick="switchMode()">
+                ¿Nuevo? <span style="color:var(--accent)">Crea una identidad</span>
             </p>
         </div>
     </div>
 
     <script>
+        function setMode(mode) {
+            document.getElementById('device-selector').style.display = 'none';
+            document.getElementById('main-app').style.display = 'block';
+            document.body.classList.add('mode-' + mode);
+            console.log("Modo configurado: " + mode);
+        }
+
         const modal = document.getElementById('modal');
         let isLogin = true;
 
-        function toggleModal(show) {
-            modal.style.display = show ? 'flex' : 'none';
-        }
-
-        function closeOutside(e) {
-            if(e.target === modal) toggleModal(false);
-        }
+        function toggleModal(show) { modal.style.display = show ? 'flex' : 'none'; }
+        function closeOutside(e) { if(e.target === modal) toggleModal(false); }
 
         function switchMode() {
             isLogin = !isLogin;
             document.getElementById('mTitle').innerText = isLogin ? 'ACCESO' : 'REGISTRO';
             document.getElementById('mSwitch').innerHTML = isLogin ? 
-                '¿Nuevo aquí? <span style="color:var(--accent)">Crea una identidad</span>' : 
+                '¿Nuevo? <span style="color:var(--accent)">Crea una identidad</span>' : 
                 '¿Ya tienes identidad? <span style="color:var(--accent)">Conéctate</span>';
         }
 
         function authAction() {
             const mail = document.getElementById('email').value;
             if(!mail) return alert("Identificación requerida");
-            alert(isLogin ? "Sincronizando con el anexo..." : "Identidad creada en la red ANX.");
+            alert(isLogin ? "Sincronizando con ANX..." : "Identidad registrada.");
             toggleModal(false);
         }
     </script>
-
 </body>
 </html>
