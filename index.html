@@ -48,73 +48,71 @@
         .bg-animate { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle at 50% 50%, #001529 0%, #020202 100%); z-index: -2; }
         .bg-mesh { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-image: linear-gradient(rgba(0, 140, 255, 0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(0, 140, 255, 0.05) 1px, transparent 1px); background-size: 50px 50px; z-index: -1; mask-image: radial-gradient(ellipse at center, black, transparent 80%); }
 
-        /* BARRA DE MONEDAS */
+        /* BARRA DE MONEDAS (OCULTA INICIALMENTE) */
         #user-bar {
-            display: none; position: fixed; top: 20px; right: 20px; z-index: 100;
-            background: rgba(0,0,0,0.6); padding: 8px 15px;
-            border-radius: 50px; border: 1px solid var(--accent); backdrop-filter: blur(10px);
-            font-size: 0.8rem;
+            display: none; 
+            position: fixed; top: 20px; right: 20px; z-index: 100;
+            background: rgba(0, 140, 255, 0.1); 
+            padding: 10px 20px;
+            border-radius: 50px; 
+            border: 1px solid var(--accent); 
+            backdrop-filter: blur(15px);
+            font-size: 0.85rem;
+            box-shadow: 0 0 15px rgba(0, 140, 255, 0.2);
         }
 
-        /* BOTÓN CREAR (EL QUE NO MOLESTA) */
+        /* BOTÓN CREAR MEJORADO */
         #btn-create {
-            display: none; /* Se activa al loguear */
+            display: none;
             position: fixed;
-            bottom: 30px;
-            right: 30px;
-            width: 60px;
-            height: 60px;
-            background: var(--accent);
+            bottom: 35px;
+            right: 35px;
+            width: 65px;
+            height: 65px;
+            background: linear-gradient(135deg, var(--accent), #005bb5);
             color: white;
-            border: none;
+            border: 1px solid rgba(255,255,255,0.2);
             border-radius: 50%;
-            font-size: 2rem;
-            font-weight: bold;
+            font-size: 2.2rem;
             cursor: pointer;
             z-index: 1000;
-            box-shadow: 0 4px 20px var(--accent-glow);
-            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 8px 25px var(--accent-glow), inset 0 0 10px rgba(255,255,255,0.3);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            display: flex;
             align-items: center;
             justify-content: center;
         }
-        #btn-create:hover { transform: scale(1.1) rotate(90deg); }
-        #btn-create:active { transform: scale(0.9); }
-
-        /* FEED */
-        #feed-container {
-            display: none; width: 100%; height: 100vh;
-            background: black; z-index: 50;
+        #btn-create:hover { 
+            transform: scale(1.15) rotate(180deg);
+            box-shadow: 0 12px 35px var(--accent-glow);
         }
 
-        .video-section {
-            height: 100vh; width: 100%;
-            display: flex; align-items: center; justify-content: center; position: relative;
-        }
+        /* FEED Y ACCIONES */
+        #feed-container { display: none; width: 100%; height: 100vh; background: black; z-index: 50; }
+        .video-section { height: 100vh; width: 100%; display: flex; align-items: center; justify-content: center; position: relative; }
 
-        /* ACCIONES LATERALES (Like/Comentar) */
         .side-actions {
             display: none; 
-            position: absolute; right: 20px; bottom: 120px; /* Un poco más arriba para no chocar con el botón crear */
-            flex-direction: column; gap: 15px; z-index: 60;
+            position: absolute; right: 25px; bottom: 130px;
+            flex-direction: column; gap: 18px; z-index: 60;
         }
 
         .action-btn {
-            background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2);
-            width: 45px; height: 45px; border-radius: 50%; color: white;
+            background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.1);
+            width: 50px; height: 50px; border-radius: 50%; color: white;
             cursor: pointer; display: flex; align-items: center; justify-content: center;
-            backdrop-filter: blur(5px); transition: 0.3s;
+            backdrop-filter: blur(10px); transition: 0.3s;
         }
-        .action-btn:hover { background: var(--accent); }
+        .action-btn:hover { background: var(--accent); transform: scale(1.1); }
 
-        /* BOTONES Y MODAL ORIGINALES */
-        .container { text-align: center; z-index: 10; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; }
+        /* GENERAL */
         .logo { font-size: clamp(4rem, 15vw, 7.5rem); font-weight: 900; letter-spacing: -5px; color: #fff; margin: 0; filter: drop-shadow(0 0 15px var(--accent-glow)); }
         .logo span { color: var(--accent); }
         .welcome-text { font-size: 1.1rem; color: #aaa; margin-bottom: 40px; text-transform: uppercase; letter-spacing: 5px; font-weight: 300; }
-        .btn-group { display: flex; gap: 20px; justify-content: center; flex-wrap: wrap; }
-        .btn { padding: 16px 35px; border-radius: 12px; font-weight: 600; cursor: pointer; transition: 0.3s; text-decoration: none; text-transform: uppercase; font-size: 0.9rem; border: 1px solid rgba(255,255,255,0.1); }
-        .btn-outline { color: #fff; background: rgba(255,255,255,0.03); backdrop-filter: blur(5px); }
-        .btn-primary { background: var(--accent); color: white; border: none; box-shadow: 0 4px 15px var(--accent-glow); }
+        .btn-group { display: flex; gap: 20px; justify-content: center; }
+        .btn { padding: 16px 35px; border-radius: 12px; font-weight: 600; cursor: pointer; transition: 0.3s; text-decoration: none; text-transform: uppercase; border: 1px solid rgba(255,255,255,0.1); }
+        .btn-outline { color: #fff; background: rgba(255,255,255,0.03); }
+        .btn-primary { background: var(--accent); color: white; border: none; }
         
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.92); backdrop-filter: blur(15px); justify-content: center; align-items: center; z-index: 1000; }
         .modal-box { background: var(--glass); padding: 40px; border-radius: 30px; border: 1px solid rgba(255,255,255,0.1); width: 90%; max-width: 380px; text-align: center; }
@@ -139,12 +137,12 @@
         <div class="bg-mesh"></div>
 
         <div id="user-bar">
-            <span id="coin-count" style="color: #ffd700; font-weight: 800;">0 ANX Coins</span>
+            <span id="coin-count" style="color: #ffd700; font-weight: 800; text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);">0 ANX Coins</span>
         </div>
 
         <button id="btn-create" title="Subir Video" onclick="actionCreate()">+</button>
 
-        <div id="home-content" class="container fade-in">
+        <div id="home-content" class="container fade-in" style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh;">
             <h1 class="logo">AN<span>X</span></h1>
             <p class="welcome-text">Bienvenido al anexo</p>
             <div class="btn-group">
@@ -158,7 +156,7 @@
                 <div id="empty-msg" class="fade-in" style="text-align: center;">
                     <span style="font-size: 4rem; opacity: 0.2;">🎬</span>
                     <h2 style="font-weight: 300;">Aún no hay ningún video</h2>
-                    <p style="color: var(--accent); font-weight: 700; font-size: 0.7rem;">SÉ EL PRIMERO EN CREAR UNO</p>
+                    <p style="color: var(--accent); font-weight: 700; font-size: 0.7rem; letter-spacing: 2px;">SÉ EL PRIMERO EN CREAR UNO</p>
                     <button class="btn btn-outline" onclick="window.location.reload()" style="margin-top:20px; font-size:0.7rem;">⬅️ Volver</button>
                 </div>
 
@@ -200,6 +198,7 @@
             document.getElementById('home-content').style.display = 'none';
             document.getElementById('feed-container').style.display = 'block';
             
+            // SOLO mostramos elementos de usuario si se logueó
             if(isLoggedIn) {
                 document.getElementById('user-bar').style.display = 'block';
                 document.getElementById('btn-create').style.display = 'flex';
@@ -217,9 +216,8 @@
         }
 
         function actionCreate() {
-            // Aquí puedes llamar a una función para abrir archivos o un modal de carga
-            alert("Selecciona el video que quieres subir a la red ANX...");
-            onVideoLoaded(); // Simulación
+            alert("Accediendo a la cámara y archivos de ANX...");
+            onVideoLoaded(); 
         }
 
         function toggleModal(show) { modal.style.display = show ? 'flex' : 'none'; }
@@ -232,7 +230,7 @@
         function authAction() {
             if(!document.getElementById('email').value) return alert("Email requerido");
             toggleModal(false);
-            startExploring(true);
+            startExploring(true); // Activa la sesión y muestra Coins/Botón Crear
         }
     </script>
 </body>
