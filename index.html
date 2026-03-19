@@ -21,7 +21,7 @@
             overflow: hidden;
         }
 
-        /* SELECTOR INICIAL */
+        /* SELECTOR INICIAL (TUYO ORIGINAL) */
         #device-selector {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -39,84 +39,79 @@
             align-items: center; justify-content: center;
         }
 
-        /* RESPONSIVE */
+        /* RESPONSIVE ORIGINAL */
         .mode-pc .container { max-width: 1200px; margin: 0 auto; }
         .mode-mobile .container { max-width: 450px; padding: 20px; margin: 0 auto; }
         .mode-mobile .logo { font-size: 4.5rem; }
 
-        /* FONDO */
+        /* FONDO ORIGINAL */
         .bg-animate { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle at 50% 50%, #001529 0%, #020202 100%); z-index: -2; }
         .bg-mesh { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-image: linear-gradient(rgba(0, 140, 255, 0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(0, 140, 255, 0.05) 1px, transparent 1px); background-size: 50px 50px; z-index: -1; mask-image: radial-gradient(ellipse at center, black, transparent 80%); }
 
-        /* BARRA DE USUARIO */
+        /* BARRA DE MONEDAS DISCRETA */
         #user-bar {
             display: none; position: fixed; top: 20px; right: 20px; z-index: 100;
-            align-items: center; background: rgba(0,0,0,0.6); padding: 10px 20px;
+            background: rgba(0,0,0,0.6); padding: 8px 15px;
             border-radius: 50px; border: 1px solid var(--accent); backdrop-filter: blur(10px);
+            font-size: 0.8rem;
         }
 
-        /* BOTÓN CREAR (FLOTANTE) */
+        /* BOTÓN CREAR (EL QUE NO MOLESTA) */
         #btn-create {
-            display: none; position: fixed; left: 30px; bottom: 30px; z-index: 100;
-            width: 60px; height: 60px; border-radius: 50%;
+            display: none; position: fixed; right: 30px; bottom: 30px; z-index: 100;
+            width: 55px; height: 55px; border-radius: 50%;
             background: var(--accent); color: white; border: none;
-            font-size: 2rem; cursor: pointer; transition: 0.3s;
-            box-shadow: 0 0 20px var(--accent-glow);
+            font-size: 1.8rem; cursor: pointer; transition: 0.3s;
+            box-shadow: 0 0 15px var(--accent-glow);
             align-items: center; justify-content: center;
         }
-        #btn-create:hover { transform: scale(1.1) rotate(90deg); }
 
-        /* FEED Y VIDEOS */
+        /* FEED */
         #feed-container {
             display: none; width: 100%; height: 100vh;
-            overflow-y: auto; scroll-snap-type: y mandatory;
             background: black; z-index: 50;
         }
 
         .video-section {
-            height: 100vh; width: 100%; scroll-snap-align: start;
+            height: 100vh; width: 100%;
             display: flex; align-items: center; justify-content: center; position: relative;
         }
 
-        /* ACCIONES LATERALES (Like/Comentar) */
+        /* BOTONES DE INTERACCIÓN (OCULTOS POR DEFECTO) */
         .side-actions {
+            display: none; /* SOLO APARECE SI HAY VIDEO */
             position: absolute; right: 20px; bottom: 100px;
-            display: flex; flex-direction: column; gap: 20px; z-index: 60;
+            flex-direction: column; gap: 15px; z-index: 60;
         }
 
         .action-btn {
             background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2);
-            width: 50px; height: 50px; border-radius: 50%; color: white;
-            cursor: pointer; backdrop-filter: blur(5px); transition: 0.3s;
-            display: flex; align-items: center; justify-content: center; font-size: 1.2rem;
+            width: 45px; height: 45px; border-radius: 50%; color: white;
+            cursor: pointer; display: flex; align-items: center; justify-content: center;
         }
-        .action-btn:hover { background: var(--accent); border-color: var(--accent); }
 
-        /* BOTONES GENERALES */
+        /* ESTILOS DE BOTONES Y MODAL ORIGINALES */
+        .container { text-align: center; z-index: 10; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; }
+        .logo { font-size: clamp(4rem, 15vw, 7.5rem); font-weight: 900; letter-spacing: -5px; color: #fff; margin: 0; filter: drop-shadow(0 0 15px var(--accent-glow)); }
+        .logo span { color: var(--accent); }
+        .welcome-text { font-size: 1.1rem; color: #aaa; margin-bottom: 40px; text-transform: uppercase; letter-spacing: 5px; font-weight: 300; }
+        .btn-group { display: flex; gap: 20px; justify-content: center; flex-wrap: wrap; }
         .btn { padding: 16px 35px; border-radius: 12px; font-weight: 600; cursor: pointer; transition: 0.3s; text-decoration: none; text-transform: uppercase; font-size: 0.9rem; border: 1px solid rgba(255,255,255,0.1); }
         .btn-outline { color: #fff; background: rgba(255,255,255,0.03); backdrop-filter: blur(5px); }
         .btn-primary { background: var(--accent); color: white; border: none; box-shadow: 0 4px 15px var(--accent-glow); }
         
-        /* MODAL */
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.92); backdrop-filter: blur(15px); justify-content: center; align-items: center; z-index: 1000; }
         .modal-box { background: var(--glass); padding: 40px; border-radius: 30px; border: 1px solid rgba(255,255,255,0.1); width: 90%; max-width: 380px; text-align: center; }
         input { width: 100%; padding: 15px; margin: 12px 0; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: white; outline: none; box-sizing: border-box; }
 
         .fade-in { animation: fadeIn 1.2s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
-
-        /* Ajustes específicos para móviles */
-        @media (max-width: 600px) {
-            #btn-create { left: auto; right: 20px; bottom: 20px; width: 50px; height: 50px; }
-            .side-actions { right: 10px; bottom: 80px; }
-        }
     </style>
 </head>
 <body>
 
     <div id="device-selector">
-        <h2 style="letter-spacing: 3px; font-weight: 800;">IDENTIFICA TU PLATAFORMA</h2>
-        <p style="color: #666; margin-bottom: 35px;">OPTIMIZACIÓN DE INTERFAZ ANX</p>
+        <h2 style="letter-spacing: 3px; font-weight: 800; color: white;">IDENTIFICA TU PLATAFORMA</h2>
         <div class="btn-group">
             <div class="btn btn-outline" onclick="setMode('mobile')">📱 MÓVIL</div>
             <div class="btn btn-outline" onclick="setMode('pc')">💻 ORDENADOR</div>
@@ -131,10 +126,10 @@
             <span id="coin-count" style="color: #ffd700; font-weight: 800;">0 ANX Coins</span>
         </div>
 
-        <button id="btn-create" title="Crear Video" onclick="actionCreate()">+</button>
+        <button id="btn-create" onclick="actionCreate()">+</button>
 
         <div id="home-content" class="container fade-in">
-            <h1 class="logo" style="margin-bottom: 10px;">AN<span>X</span></h1>
+            <h1 class="logo">AN<span>X</span></h1>
             <p class="welcome-text">Bienvenido al anexo</p>
             <div class="btn-group">
                 <a href="#" class="btn btn-outline" onclick="startExploring(false)">Explorar</a>
@@ -144,18 +139,17 @@
 
         <div id="feed-container">
             <div class="video-section">
-                <div class="fade-in" style="text-align: center;">
+                <div id="empty-msg" class="fade-in" style="text-align: center;">
                     <span style="font-size: 4rem; opacity: 0.2;">🎬</span>
                     <h2 style="font-weight: 300;">Aún no hay ningún video</h2>
-                    <p style="color: var(--accent); font-weight: 700; letter-spacing: 2px; font-size: 0.7rem;">SÉ EL PRIMERO EN CREAR UNO</p>
-                    <button class="btn btn-outline" onclick="window.location.reload()" style="margin-top: 20px; font-size: 0.7rem;">⬅️ Volver</button>
-                    <p id="access-msg" style="color: #ff4444; font-size: 0.8rem; margin-top: 20px; display: none;">Inicia sesión para interactuar</p>
+                    <p style="color: var(--accent); font-weight: 700; font-size: 0.7rem;">SÉ EL PRIMERO EN CREAR UNO</p>
+                    <button class="btn btn-outline" onclick="window.location.reload()" style="margin-top:20px; font-size:0.7rem;">⬅️ Volver</button>
                 </div>
 
-                <div class="side-actions">
-                    <button class="action-btn" onclick="checkAccess('like')">❤️</button>
-                    <button class="action-btn" onclick="checkAccess('comment')">💬</button>
-                    <button class="action-btn" onclick="alert('Compartiendo...')">🔗</button>
+                <div id="video-actions" class="side-actions">
+                    <button class="action-btn" onclick="addCoin()">❤️</button>
+                    <button class="action-btn">💬</button>
+                    <button class="action-btn">🔗</button>
                 </div>
             </div>
         </div>
@@ -166,7 +160,7 @@
             <h2 id="mTitle" style="margin-top:0; font-weight: 800;">ACCESO</h2>
             <input type="email" id="email" placeholder="Usuario o Email">
             <input type="password" id="pass" placeholder="Contraseña">
-            <button class="btn btn-primary" style="width:100%; margin-top:10px;" onclick="authAction()">Conectar</button>
+            <button class="btn btn-primary" style="width:100%;" onclick="authAction()">Conectar</button>
             <p id="mSwitch" style="font-size:0.75rem; color:#666; margin-top:25px; cursor:pointer;" onclick="switchMode()">
                 ¿Nuevo? <span style="color:var(--accent)">Crea una identidad</span>
             </p>
@@ -190,50 +184,38 @@
             document.getElementById('home-content').style.display = 'none';
             document.getElementById('feed-container').style.display = 'block';
             
-            // Mostrar botón de crear y barra de usuario solo si está logueado
             if(isLoggedIn) {
-                document.getElementById('user-bar').style.display = 'flex';
+                document.getElementById('user-bar').style.display = 'block';
                 document.getElementById('btn-create').style.display = 'flex';
             }
         }
 
-        function checkAccess(type) {
-            if(!isLoggedIn) {
-                const msg = document.getElementById('access-msg');
-                msg.style.display = 'block';
-                setTimeout(() => msg.style.display = 'none', 3000);
-            } else {
-                if(type === 'like') {
-                    coins += 10;
-                    document.getElementById('coin-count').innerText = coins + " ANX Coins";
-                    alert("+10 ANX Coins por tu Like");
-                } else {
-                    alert("Abriendo panel de comentarios...");
-                }
-            }
+        // Función para cuando existan videos (esto activará los botones)
+        function onVideoLoaded() {
+            document.getElementById('empty-msg').style.display = 'none';
+            document.getElementById('video-actions').style.display = 'flex';
+        }
+
+        function addCoin() {
+            coins += 10;
+            document.getElementById('coin-count').innerText = coins + " ANX Coins";
         }
 
         function actionCreate() {
-            if(isLoggedIn) {
-                alert("Preparando interfaz de carga de video...");
-            }
+            alert("Sistema de carga de video próximamente.");
+            // Ejemplo: Simulamos que al "crear" aparece el primer video
+            onVideoLoaded(); 
         }
 
         function toggleModal(show) { modal.style.display = show ? 'flex' : 'none'; }
         function closeOutside(e) { if(e.target === modal) toggleModal(false); }
-
         function switchMode() {
             isLogin = !isLogin;
             document.getElementById('mTitle').innerText = isLogin ? 'ACCESO' : 'REGISTRO';
-            document.getElementById('mSwitch').innerHTML = isLogin ? 
-                '¿Nuevo? <span style="color:var(--accent)">Crea una identidad</span>' : 
-                '¿Ya tienes identidad? <span style="color:var(--accent)">Conéctate</span>';
         }
 
         function authAction() {
-            const mail = document.getElementById('email').value;
-            if(!mail) return alert("Identificación requerida");
-            alert(isLogin ? "Sincronizando..." : "Identidad registrada.");
+            if(!document.getElementById('email').value) return alert("Email requerido");
             toggleModal(false);
             startExploring(true);
         }
