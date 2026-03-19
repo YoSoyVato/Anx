@@ -21,7 +21,7 @@
             overflow: hidden;
         }
 
-        /* SELECTOR INICIAL (TUYO ORIGINAL) */
+        /* SELECTOR INICIAL */
         #device-selector {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -39,16 +39,16 @@
             align-items: center; justify-content: center;
         }
 
-        /* RESPONSIVE ORIGINAL */
+        /* RESPONSIVE */
         .mode-pc .container { max-width: 1200px; margin: 0 auto; }
         .mode-mobile .container { max-width: 450px; padding: 20px; margin: 0 auto; }
         .mode-mobile .logo { font-size: 4.5rem; }
 
-        /* FONDO ORIGINAL */
+        /* FONDO */
         .bg-animate { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle at 50% 50%, #001529 0%, #020202 100%); z-index: -2; }
         .bg-mesh { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-image: linear-gradient(rgba(0, 140, 255, 0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(0, 140, 255, 0.05) 1px, transparent 1px); background-size: 50px 50px; z-index: -1; mask-image: radial-gradient(ellipse at center, black, transparent 80%); }
 
-        /* BARRA DE MONEDAS DISCRETA */
+        /* BARRA DE MONEDAS */
         #user-bar {
             display: none; position: fixed; top: 20px; right: 20px; z-index: 100;
             background: rgba(0,0,0,0.6); padding: 8px 15px;
@@ -58,13 +58,27 @@
 
         /* BOTÓN CREAR (EL QUE NO MOLESTA) */
         #btn-create {
-            display: none; position: fixed; right: 30px; bottom: 30px; z-index: 100;
-            width: 55px; height: 55px; border-radius: 50%;
-            background: var(--accent); color: white; border: none;
-            font-size: 1.8rem; cursor: pointer; transition: 0.3s;
-            box-shadow: 0 0 15px var(--accent-glow);
-            align-items: center; justify-content: center;
+            display: none; /* Se activa al loguear */
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 60px;
+            height: 60px;
+            background: var(--accent);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            font-size: 2rem;
+            font-weight: bold;
+            cursor: pointer;
+            z-index: 1000;
+            box-shadow: 0 4px 20px var(--accent-glow);
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            align-items: center;
+            justify-content: center;
         }
+        #btn-create:hover { transform: scale(1.1) rotate(90deg); }
+        #btn-create:active { transform: scale(0.9); }
 
         /* FEED */
         #feed-container {
@@ -77,10 +91,10 @@
             display: flex; align-items: center; justify-content: center; position: relative;
         }
 
-        /* BOTONES DE INTERACCIÓN (OCULTOS POR DEFECTO) */
+        /* ACCIONES LATERALES (Like/Comentar) */
         .side-actions {
-            display: none; /* SOLO APARECE SI HAY VIDEO */
-            position: absolute; right: 20px; bottom: 100px;
+            display: none; 
+            position: absolute; right: 20px; bottom: 120px; /* Un poco más arriba para no chocar con el botón crear */
             flex-direction: column; gap: 15px; z-index: 60;
         }
 
@@ -88,9 +102,11 @@
             background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2);
             width: 45px; height: 45px; border-radius: 50%; color: white;
             cursor: pointer; display: flex; align-items: center; justify-content: center;
+            backdrop-filter: blur(5px); transition: 0.3s;
         }
+        .action-btn:hover { background: var(--accent); }
 
-        /* ESTILOS DE BOTONES Y MODAL ORIGINALES */
+        /* BOTONES Y MODAL ORIGINALES */
         .container { text-align: center; z-index: 10; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; }
         .logo { font-size: clamp(4rem, 15vw, 7.5rem); font-weight: 900; letter-spacing: -5px; color: #fff; margin: 0; filter: drop-shadow(0 0 15px var(--accent-glow)); }
         .logo span { color: var(--accent); }
@@ -126,7 +142,7 @@
             <span id="coin-count" style="color: #ffd700; font-weight: 800;">0 ANX Coins</span>
         </div>
 
-        <button id="btn-create" onclick="actionCreate()">+</button>
+        <button id="btn-create" title="Subir Video" onclick="actionCreate()">+</button>
 
         <div id="home-content" class="container fade-in">
             <h1 class="logo">AN<span>X</span></h1>
@@ -190,7 +206,6 @@
             }
         }
 
-        // Función para cuando existan videos (esto activará los botones)
         function onVideoLoaded() {
             document.getElementById('empty-msg').style.display = 'none';
             document.getElementById('video-actions').style.display = 'flex';
@@ -202,9 +217,9 @@
         }
 
         function actionCreate() {
-            alert("Sistema de carga de video próximamente.");
-            // Ejemplo: Simulamos que al "crear" aparece el primer video
-            onVideoLoaded(); 
+            // Aquí puedes llamar a una función para abrir archivos o un modal de carga
+            alert("Selecciona el video que quieres subir a la red ANX...");
+            onVideoLoaded(); // Simulación
         }
 
         function toggleModal(show) { modal.style.display = show ? 'flex' : 'none'; }
