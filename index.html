@@ -27,10 +27,8 @@
             top: 0; left: 0; width: 100%; height: 100%;
             background: var(--bg);
             z-index: 2000;
-            display: flex;
-            flex-direction: column;
+            display: flex; flex-direction: column;
             align-items: center; justify-content: center;
-            text-align: center;
         }
 
         #main-app { 
@@ -39,61 +37,42 @@
             align-items: center; justify-content: center;
         }
 
-        /* RESPONSIVE */
-        .mode-pc .container { max-width: 1200px; margin: 0 auto; }
-        .mode-mobile .container { max-width: 450px; padding: 20px; margin: 0 auto; }
-        .mode-mobile .logo { font-size: 4.5rem; }
-
         /* FONDO */
         .bg-animate { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle at 50% 50%, #001529 0%, #020202 100%); z-index: -2; }
         .bg-mesh { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-image: linear-gradient(rgba(0, 140, 255, 0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(0, 140, 255, 0.05) 1px, transparent 1px); background-size: 50px 50px; z-index: -1; mask-image: radial-gradient(ellipse at center, black, transparent 80%); }
 
-        /* BARRA DE MONEDAS (OCULTA INICIALMENTE) */
+        /* HEADER DE USUARIO (SOLO LOGUEADOS) */
+        #user-header {
+            display: none; /* Oculto por defecto */
+            position: fixed; top: 20px; right: 20px; z-index: 1000;
+            display: flex; align-items: center; gap: 10px;
+        }
+
         #user-bar {
-            display: none; 
-            position: fixed; top: 20px; right: 20px; z-index: 100;
             background: rgba(0, 140, 255, 0.1); 
-            padding: 10px 20px;
-            border-radius: 50px; 
-            border: 1px solid var(--accent); 
-            backdrop-filter: blur(15px);
-            font-size: 0.85rem;
-            box-shadow: 0 0 15px rgba(0, 140, 255, 0.2);
+            padding: 10px 20px; border-radius: 50px; 
+            border: 1px solid var(--accent); backdrop-filter: blur(15px);
+            font-size: 0.85rem; box-shadow: 0 0 15px rgba(0, 140, 255, 0.2);
         }
 
-        /* BOTÓN CREAR MEJORADO */
+        /* BOTÓN CREAR (AL LADO DE COINS) */
         #btn-create {
-            display: none;
-            position: fixed;
-            bottom: 35px;
-            right: 35px;
-            width: 65px;
-            height: 65px;
-            background: linear-gradient(135deg, var(--accent), #005bb5);
-            color: white;
-            border: 1px solid rgba(255,255,255,0.2);
-            border-radius: 50%;
-            font-size: 2.2rem;
-            cursor: pointer;
-            z-index: 1000;
-            box-shadow: 0 8px 25px var(--accent-glow), inset 0 0 10px rgba(255,255,255,0.3);
-            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            width: 40px; height: 40px;
+            background: var(--accent); color: white;
+            border: none; border-radius: 50%;
+            font-size: 1.5rem; font-weight: bold;
+            cursor: pointer; transition: 0.3s;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 0 15px var(--accent-glow);
         }
-        #btn-create:hover { 
-            transform: scale(1.15) rotate(180deg);
-            box-shadow: 0 12px 35px var(--accent-glow);
-        }
+        #btn-create:hover { transform: rotate(90deg) scale(1.1); }
 
-        /* FEED Y ACCIONES */
+        /* FEED */
         #feed-container { display: none; width: 100%; height: 100vh; background: black; z-index: 50; }
         .video-section { height: 100vh; width: 100%; display: flex; align-items: center; justify-content: center; position: relative; }
 
         .side-actions {
-            display: none; 
-            position: absolute; right: 25px; bottom: 130px;
+            display: none; position: absolute; right: 25px; bottom: 50px;
             flex-direction: column; gap: 18px; z-index: 60;
         }
 
@@ -103,9 +82,8 @@
             cursor: pointer; display: flex; align-items: center; justify-content: center;
             backdrop-filter: blur(10px); transition: 0.3s;
         }
-        .action-btn:hover { background: var(--accent); transform: scale(1.1); }
 
-        /* GENERAL */
+        /* INTERFAZ GENERAL */
         .logo { font-size: clamp(4rem, 15vw, 7.5rem); font-weight: 900; letter-spacing: -5px; color: #fff; margin: 0; filter: drop-shadow(0 0 15px var(--accent-glow)); }
         .logo span { color: var(--accent); }
         .welcome-text { font-size: 1.1rem; color: #aaa; margin-bottom: 40px; text-transform: uppercase; letter-spacing: 5px; font-weight: 300; }
@@ -136,13 +114,14 @@
         <div class="bg-animate"></div>
         <div class="bg-mesh"></div>
 
-        <div id="user-bar">
-            <span id="coin-count" style="color: #ffd700; font-weight: 800; text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);">0 ANX Coins</span>
+        <div id="user-header" style="display: none;">
+            <div id="user-bar">
+                <span id="coin-count" style="color: #ffd700; font-weight: 800;">0 ANX Coins</span>
+            </div>
+            <button id="btn-create" onclick="actionCreate()">+</button>
         </div>
 
-        <button id="btn-create" title="Subir Video" onclick="actionCreate()">+</button>
-
-        <div id="home-content" class="container fade-in" style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh;">
+        <div id="home-content" class="container fade-in">
             <h1 class="logo">AN<span>X</span></h1>
             <p class="welcome-text">Bienvenido al anexo</p>
             <div class="btn-group">
@@ -159,7 +138,6 @@
                     <p style="color: var(--accent); font-weight: 700; font-size: 0.7rem; letter-spacing: 2px;">SÉ EL PRIMERO EN CREAR UNO</p>
                     <button class="btn btn-outline" onclick="window.location.reload()" style="margin-top:20px; font-size:0.7rem;">⬅️ Volver</button>
                 </div>
-
                 <div id="video-actions" class="side-actions">
                     <button class="action-btn" onclick="addCoin()">❤️</button>
                     <button class="action-btn">💬</button>
@@ -198,26 +176,26 @@
             document.getElementById('home-content').style.display = 'none';
             document.getElementById('feed-container').style.display = 'block';
             
-            // SOLO mostramos elementos de usuario si se logueó
+            // LÓGICA CRUCIAL:
+            // Solo si viene de authAction (isLoggedIn = true) mostramos el header
             if(isLoggedIn) {
-                document.getElementById('user-bar').style.display = 'block';
-                document.getElementById('btn-create').style.display = 'flex';
+                document.getElementById('user-header').style.display = 'flex';
+            } else {
+                document.getElementById('user-header').style.display = 'none';
             }
         }
 
-        function onVideoLoaded() {
-            document.getElementById('empty-msg').style.display = 'none';
-            document.getElementById('video-actions').style.display = 'flex';
-        }
-
         function addCoin() {
+            // Solo sumamos si está logueado
+            if(!isLoggedIn) return alert("Debes iniciar sesión para ganar coins");
             coins += 10;
             document.getElementById('coin-count').innerText = coins + " ANX Coins";
         }
 
         function actionCreate() {
-            alert("Accediendo a la cámara y archivos de ANX...");
-            onVideoLoaded(); 
+            alert("Subiendo video a los servidores de ANX...");
+            document.getElementById('empty-msg').style.display = 'none';
+            document.getElementById('video-actions').style.display = 'flex';
         }
 
         function toggleModal(show) { modal.style.display = show ? 'flex' : 'none'; }
@@ -230,7 +208,7 @@
         function authAction() {
             if(!document.getElementById('email').value) return alert("Email requerido");
             toggleModal(false);
-            startExploring(true); // Activa la sesión y muestra Coins/Botón Crear
+            startExploring(true); // Entra como usuario registrado
         }
     </script>
 </body>
