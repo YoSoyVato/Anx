@@ -8,6 +8,7 @@
         :root {
             --accent: #008cff;
             --bg: #00050a;
+            --ai-color: #00ffcc;
         }
 
         body, html {
@@ -19,7 +20,6 @@
             overflow: hidden;
         }
 
-        /* LIENZO DEL UNIVERSO */
         #universe-canvas {
             position: absolute;
             top: 0; left: 0;
@@ -27,68 +27,99 @@
             z-index: 1;
         }
 
-        /* PANEL DE PENSAMIENTOS DE LA IA */
+        /* --- PERSONAJE LUMINA --- */
+        #ai-character-container {
+            position: fixed;
+            bottom: 230px; /* Sobre el panel de log */
+            left: 50px;
+            z-index: 150;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .lumina {
+            width: 60px;
+            height: 60px;
+            background: radial-gradient(circle, var(--ai-color) 0%, transparent 70%);
+            border-radius: 50%;
+            position: relative;
+            animation: float 3s ease-in-out infinite;
+            box-shadow: 0 0 30px var(--ai-color);
+            transition: all 0.3s ease;
+        }
+
+        /* Ojos de Lumina */
+        .lumina::before, .lumina::after {
+            content: '';
+            position: absolute;
+            top: 40%;
+            width: 8px;
+            height: 8px;
+            background: white;
+            border-radius: 50%;
+            animation: blink 4s infinite;
+        }
+        .lumina::before { left: 25%; }
+        .lumina::after { right: 25%; }
+
+        .ai-name {
+            margin-top: 10px;
+            font-size: 0.8rem;
+            color: var(--ai-color);
+            text-shadow: 0 0 10px var(--ai-color);
+            font-weight: bold;
+            background: rgba(0,0,0,0.5);
+            padding: 2px 10px;
+            border-radius: 10px;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0) scale(1); }
+            50% { transform: translateY(-15px) scale(1.05); }
+        }
+
+        @keyframes blink {
+            0%, 90%, 100% { transform: scaleY(1); }
+            95% { transform: scaleY(0.1); }
+        }
+
+        /* Acción de brillar cuando crea algo */
+        .lumina-active {
+            transform: scale(1.3);
+            box-shadow: 0 0 60px #fff;
+            filter: brightness(1.5);
+        }
+
+        /* --- RESTO DE LA INTERFAZ --- */
         #ai-brain {
             position: fixed;
-            bottom: 20px;
-            left: 20px;
-            width: 300px;
-            height: 200px;
-            background: rgba(0, 10, 20, 0.8);
-            border: 1px solid var(--accent);
-            border-radius: 10px;
-            backdrop-filter: blur(10px);
+            bottom: 20px; left: 20px;
+            width: 300px; height: 180px;
+            background: rgba(0, 10, 20, 0.85);
+            border: 2px solid var(--accent);
+            border-radius: 15px;
+            backdrop-filter: blur(15px);
             z-index: 100;
             padding: 15px;
             font-size: 0.75rem;
-            display: flex;
-            flex-direction: column;
-            box-shadow: 0 0 20px rgba(0, 140, 255, 0.3);
+            display: flex; flex-direction: column;
+            box-shadow: 0 0 30px rgba(0, 140, 255, 0.2);
         }
 
-        #ai-log {
-            overflow-y: auto;
-            flex-grow: 1;
-            color: #00ffcc;
-        }
+        #ai-log { overflow-y: auto; flex-grow: 1; color: #fff; scrollbar-width: none; }
+        .status-bar { color: var(--accent); font-weight: bold; margin-bottom: 10px; display: flex; justify-content: space-between; }
 
-        .status-bar {
-            border-bottom: 1px solid rgba(0, 140, 255, 0.3);
-            padding-bottom: 5px;
-            margin-bottom: 10px;
-            color: var(--accent);
-            font-weight: bold;
-            text-transform: uppercase;
-        }
-
-        /* INTERFAZ SUPERIOR */
-        .header {
-            position: fixed;
-            top: 20px; width: 100%;
-            text-align: center;
-            z-index: 100;
-            pointer-events: none;
-        }
-
-        .header h1 {
-            letter-spacing: 10px;
-            font-weight: 200;
-            margin: 0;
-            opacity: 0.7;
-        }
+        .header { position: fixed; top: 20px; width: 100%; text-align: center; z-index: 100; pointer-events: none; }
+        .header h1 { letter-spacing: 15px; font-weight: 200; opacity: 0.5; }
 
         .btn-restart {
-            position: fixed;
-            top: 20px; right: 20px;
-            padding: 10px 20px;
-            background: transparent;
-            border: 1px solid white;
-            color: white;
-            cursor: pointer;
-            z-index: 1000;
-            transition: 0.3s;
+            position: fixed; top: 20px; right: 20px;
+            padding: 10px 20px; background: transparent;
+            border: 1px solid var(--accent); color: var(--accent);
+            cursor: pointer; z-index: 1000; border-radius: 5px;
         }
-        .btn-restart:hover { background: white; color: black; }
+        .btn-restart:hover { background: var(--accent); color: white; }
 
     </style>
 </head>
@@ -100,9 +131,17 @@
 
     <button class="btn-restart" onclick="resetUniverse()">REINICIAR BIG BANG</button>
 
+    <div id="ai-character-container">
+        <div id="lumina-sprite" class="lumina"></div>
+        <div class="ai-name">LUMINA AI</div>
+    </div>
+
     <div id="ai-brain">
-        <div class="status-bar">Nucleo de IA: Activo</div>
-        <div id="ai-log">Iniciando secuencia de creación...</div>
+        <div class="status-bar">
+            <span>NÚCLEO: ONLINE</span>
+            <span id="ai-energy">E: 100%</span>
+        </div>
+        <div id="ai-log">Hola Santino. Preparando el cosmos...</div>
     </div>
 
     <canvas id="universe-canvas"></canvas>
@@ -111,6 +150,7 @@
         const canvas = document.getElementById('universe-canvas');
         const ctx = canvas.getContext('2d');
         const log = document.getElementById('ai-log');
+        const lumina = document.getElementById('lumina-sprite');
 
         let width, height;
         let elements = [];
@@ -119,74 +159,73 @@
             width = canvas.width = window.innerWidth;
             height = canvas.height = window.innerHeight;
         }
-
         window.addEventListener('resize', resize);
         resize();
 
-        // Inteligencia de la IA
         class AI_Architect {
             constructor() {
                 this.energy = 100;
-                this.thoughts = [
-                    "Analizando el vacío...",
-                    "Detectando fluctuaciones cuánticas.",
-                    "Preparando el tejido del espacio-tiempo."
-                ];
+            }
+
+            triggerLumina() {
+                lumina.classList.add('lumina-active');
+                setTimeout(() => lumina.classList.remove('lumina-active'), 400);
             }
 
             think() {
                 const decider = Math.random();
                 
-                if (decider < 0.05) {
+                if (decider < 0.04) {
                     this.createStar();
-                } else if (decider < 0.07) {
+                    if(Math.random() < 0.1) this.triggerLumina();
+                } else if (decider < 0.05) {
                     this.createNebula();
-                } else if (decider < 0.01) {
+                } else if (decider < 0.005) {
                     this.createSupernova();
+                    this.triggerLumina();
                 }
 
-                // Mantener el log activo
-                if (Math.random() < 0.02) {
-                    this.updateLog();
-                }
+                if (Math.random() < 0.01) this.updateLog();
             }
 
             updateLog() {
                 const phrases = [
-                    "Expandiendo fronteras del universo.",
-                    "Generando gravedad en sector " + Math.floor(Math.random()*99),
-                    "Estabilizando órbitas planetarias.",
-                    "IA: La entropía está bajo control.",
-                    "Creando materia oscura..."
+                    "Diseñando constelaciones amigables.",
+                    "¿Viste eso? Acabo de crear una estrella.",
+                    "El vacío se ve mejor con un poco de color.",
+                    "Ajustando la gravedad para que sea suave.",
+                    "Lumina está feliz con este progreso.",
+                    "Buscando vida en sectores lejanos..."
                 ];
                 const msg = document.createElement('div');
-                msg.innerText = "> " + phrases[Math.floor(Math.random()*phrases.length)];
+                msg.style.padding = "2px 0";
+                msg.innerText = "Lumina: " + phrases[Math.floor(Math.random()*phrases.length)];
                 log.prepend(msg);
-                if(log.childNodes.length > 8) log.removeChild(log.lastChild);
+                if(log.childNodes.length > 7) log.removeChild(log.lastChild);
             }
 
             createStar() {
                 const x = Math.random() * width;
                 const y = Math.random() * height;
-                const size = Math.random() * 2;
+                const size = Math.random() * 2.5;
                 elements.push({ type: 'star', x, y, size, alpha: 0 });
             }
 
             createNebula() {
                 const x = Math.random() * width;
                 const y = Math.random() * height;
-                const size = 50 + Math.random() * 150;
-                const color = `hsla(${Math.random() * 360}, 70%, 50%, 0.05)`;
+                const size = 80 + Math.random() * 200;
+                const color = `hsla(${Math.random() * 360}, 80%, 60%, 0.04)`;
                 elements.push({ type: 'nebula', x, y, size, color });
             }
 
             createSupernova() {
                 const x = Math.random() * width;
                 const y = Math.random() * height;
-                elements.push({ type: 'supernova', x, y, radius: 1, maxRadius: 200 + Math.random()*300, alpha: 1 });
+                elements.push({ type: 'supernova', x, y, radius: 1, alpha: 1 });
                 const msg = document.createElement('div');
-                msg.style.color = "orange";
-                msg.innerText = "!!! EVENTO: Supernova detectada.";
+                msg.style.color = "#00ffcc";
+                msg.innerText = "> EVENTO: ¡Lumina creó un destello!";
                 log.prepend(msg);
             }
         }
@@ -194,13 +233,12 @@
         const AI = new AI_Architect();
 
         function draw() {
-            // Fondo con rastro suave
-            ctx.fillStyle = 'rgba(0, 5, 10, 0.1)';
+            ctx.fillStyle = 'rgba(0, 5, 10, 0.15)';
             ctx.fillRect(0, 0, width, height);
 
             elements.forEach((el, index) => {
                 if (el.type === 'star') {
-                    if(el.alpha < 1) el.alpha += 0.01;
+                    if(el.alpha < 1) el.alpha += 0.02;
                     ctx.fillStyle = `rgba(255, 255, 255, ${el.alpha})`;
                     ctx.beginPath();
                     ctx.arc(el.x, el.y, el.size, 0, Math.PI * 2);
@@ -215,13 +253,13 @@
                 }
 
                 if (el.type === 'supernova') {
-                    ctx.strokeStyle = `rgba(255, 255, 255, ${el.alpha})`;
-                    ctx.lineWidth = 2;
+                    ctx.strokeStyle = `rgba(0, 255, 204, ${el.alpha})`;
+                    ctx.lineWidth = 3;
                     ctx.beginPath();
                     ctx.arc(el.x, el.y, el.radius, 0, Math.PI * 2);
                     ctx.stroke();
-                    el.radius += 5;
-                    el.alpha -= 0.01;
+                    el.radius += 8;
+                    el.alpha -= 0.02;
                     if(el.alpha <= 0) elements.splice(index, 1);
                 }
             });
@@ -232,7 +270,7 @@
 
         function resetUniverse() {
             elements = [];
-            log.innerHTML = "EL BIG BANG HA COMENZADO...";
+            log.innerHTML = "Lumina: ¡Hagámoslo de nuevo! Big Bang en 3... 2... 1...";
         }
 
         draw();
