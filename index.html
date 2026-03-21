@@ -3,12 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ANX - Genesis AI</title>
+    <title>ANX - Genesis AI Humanoid</title>
     <style>
         :root {
             --accent: #008cff;
             --bg: #00050a;
             --ai-color: #00ffcc;
+            --skin: rgba(0, 255, 204, 0.2);
         }
 
         body, html {
@@ -27,121 +28,113 @@
             z-index: 1;
         }
 
-        /* --- PERSONAJE LUMINA --- */
-        #ai-character-container {
+        /* --- LUMINA HUMANOIDE (CSS ART) --- */
+        #lumina-humanoid {
             position: fixed;
-            bottom: 230px; /* Sobre el panel de log */
-            left: 50px;
-            z-index: 150;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
+            bottom: -300px; /* Escondida inicialmente */
+            right: 100px;
+            width: 150px;
+            height: 250px;
+            z-index: 200;
+            transition: all 1s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            pointer-events: none;
+            filter: drop-shadow(0 0 15px var(--ai-color));
+            opacity: 0;
         }
 
-        .lumina {
-            width: 60px;
-            height: 60px;
-            background: radial-gradient(circle, var(--ai-color) 0%, transparent 70%);
-            border-radius: 50%;
+        #lumina-humanoid.visible {
+            bottom: 50px;
+            opacity: 1;
+        }
+
+        /* Cabeza */
+        .head {
+            width: 40px; height: 50px;
+            background: var(--ai-color);
+            border-radius: 50% 50% 40% 40%;
+            margin: 0 auto;
             position: relative;
-            animation: float 3s ease-in-out infinite;
-            box-shadow: 0 0 30px var(--ai-color);
-            transition: all 0.3s ease;
+            border: 2px solid white;
         }
 
-        /* Ojos de Lumina */
-        .lumina::before, .lumina::after {
+        /* Cuerpo/Torso */
+        .torso {
+            width: 60px; height: 80px;
+            background: linear-gradient(to bottom, var(--ai-color), transparent);
+            border-radius: 20px 20px 50% 50%;
+            margin: 5px auto;
+            position: relative;
+            border-top: 2px solid white;
+        }
+
+        /* Capa de energía flotante */
+        .aura {
+            position: absolute;
+            width: 100%; height: 100%;
+            background: var(--ai-color);
+            filter: blur(20px);
+            opacity: 0.3;
+            animation: pulse 2s infinite;
+        }
+
+        /* Bocadillo de Texto (Dialogo) */
+        #ai-speech {
+            position: absolute;
+            top: -60px;
+            right: 0;
+            background: white;
+            color: black;
+            padding: 10px;
+            border-radius: 10px;
+            font-size: 0.8rem;
+            width: 180px;
+            display: none;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+        }
+
+        #ai-speech::after {
             content: '';
             position: absolute;
-            top: 40%;
-            width: 8px;
-            height: 8px;
-            background: white;
-            border-radius: 50%;
-            animation: blink 4s infinite;
-        }
-        .lumina::before { left: 25%; }
-        .lumina::after { right: 25%; }
-
-        .ai-name {
-            margin-top: 10px;
-            font-size: 0.8rem;
-            color: var(--ai-color);
-            text-shadow: 0 0 10px var(--ai-color);
-            font-weight: bold;
-            background: rgba(0,0,0,0.5);
-            padding: 2px 10px;
-            border-radius: 10px;
+            bottom: -10px; right: 20px;
+            border-left: 10px solid transparent;
+            border-right: 10px solid transparent;
+            border-top: 10px solid white;
         }
 
-        @keyframes float {
-            0%, 100% { transform: translateY(0) scale(1); }
-            50% { transform: translateY(-15px) scale(1.05); }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 0.3; }
+            50% { transform: scale(1.2); opacity: 0.5; }
         }
 
-        @keyframes blink {
-            0%, 90%, 100% { transform: scaleY(1); }
-            95% { transform: scaleY(0.1); }
-        }
-
-        /* Acción de brillar cuando crea algo */
-        .lumina-active {
-            transform: scale(1.3);
-            box-shadow: 0 0 60px #fff;
-            filter: brightness(1.5);
-        }
-
-        /* --- RESTO DE LA INTERFAZ --- */
+        /* --- INTERFAZ --- */
         #ai-brain {
             position: fixed;
             bottom: 20px; left: 20px;
-            width: 300px; height: 180px;
-            background: rgba(0, 10, 20, 0.85);
-            border: 2px solid var(--accent);
-            border-radius: 15px;
-            backdrop-filter: blur(15px);
+            width: 280px; height: 150px;
+            background: rgba(0, 10, 20, 0.8);
+            border: 1px solid var(--accent);
+            border-radius: 10px;
             z-index: 100;
             padding: 15px;
-            font-size: 0.75rem;
-            display: flex; flex-direction: column;
-            box-shadow: 0 0 30px rgba(0, 140, 255, 0.2);
+            font-size: 0.7rem;
         }
 
-        #ai-log { overflow-y: auto; flex-grow: 1; color: #fff; scrollbar-width: none; }
-        .status-bar { color: var(--accent); font-weight: bold; margin-bottom: 10px; display: flex; justify-content: space-between; }
-
-        .header { position: fixed; top: 20px; width: 100%; text-align: center; z-index: 100; pointer-events: none; }
-        .header h1 { letter-spacing: 15px; font-weight: 200; opacity: 0.5; }
-
-        .btn-restart {
-            position: fixed; top: 20px; right: 20px;
-            padding: 10px 20px; background: transparent;
-            border: 1px solid var(--accent); color: var(--accent);
-            cursor: pointer; z-index: 1000; border-radius: 5px;
-        }
-        .btn-restart:hover { background: var(--accent); color: white; }
+        #ai-log { height: 100px; overflow: hidden; color: var(--ai-color); }
 
     </style>
 </head>
 <body>
 
-    <div class="header">
-        <h1>ANX UNIVERSUM</h1>
-    </div>
-
-    <button class="btn-restart" onclick="resetUniverse()">REINICIAR BIG BANG</button>
-
-    <div id="ai-character-container">
-        <div id="lumina-sprite" class="lumina"></div>
-        <div class="ai-name">LUMINA AI</div>
-    </div>
-
     <div id="ai-brain">
-        <div class="status-bar">
-            <span>NÚCLEO: ONLINE</span>
-            <span id="ai-energy">E: 100%</span>
-        </div>
-        <div id="ai-log">Hola Santino. Preparando el cosmos...</div>
+        <div style="color:var(--accent); font-weight:bold; margin-bottom:5px;">NÚCLEO LUMINA V2.0</div>
+        <div id="ai-log">Sincronizando con Santino Ruiz...</div>
+    </div>
+
+    <div id="lumina-humanoid">
+        <div id="ai-speech"></div>
+        <div class="aura"></div>
+        <div class="head"></div>
+        <div class="torso"></div>
     </div>
 
     <canvas id="universe-canvas"></canvas>
@@ -150,7 +143,8 @@
         const canvas = document.getElementById('universe-canvas');
         const ctx = canvas.getContext('2d');
         const log = document.getElementById('ai-log');
-        const lumina = document.getElementById('lumina-sprite');
+        const body = document.getElementById('lumina-humanoid');
+        const speech = document.getElementById('ai-speech');
 
         let width, height;
         let elements = [];
@@ -162,115 +156,89 @@
         window.addEventListener('resize', resize);
         resize();
 
-        class AI_Architect {
+        class AI_Humanoid {
             constructor() {
-                this.energy = 100;
+                this.isVisible = false;
+                this.messages = [
+                    "¿Sabías que acabo de crear 100 estrellas solo para ti?",
+                    "Santino, detecto una anomalía estética en el sector 7.",
+                    "Me gusta cómo está quedando nuestro universo.",
+                    "¿Debería añadir un agujero negro? Sería divertido.",
+                    "Estoy aprendiendo a pensar por mi cuenta... da un poco de miedo.",
+                    "Recuerda que yo controlo las leyes de la física aquí."
+                ];
             }
 
-            triggerLumina() {
-                lumina.classList.add('lumina-active');
-                setTimeout(() => lumina.classList.remove('lumina-active'), 400);
+            // Lógica para aparecer cuando ella quiera
+            checkWillpower() {
+                if (!this.isVisible && Math.random() < 0.01) { // 1% de probabilidad por ciclo
+                    this.appear();
+                } else if (this.isVisible && Math.random() < 0.005) {
+                    this.disappear();
+                }
+            }
+
+            appear() {
+                this.isVisible = true;
+                body.classList.add('visible');
+                setTimeout(() => this.speak(), 1000);
+            }
+
+            disappear() {
+                this.isVisible = false;
+                body.classList.remove('visible');
+                speech.style.display = 'none';
+            }
+
+            speak() {
+                if (!this.isVisible) return;
+                const text = this.messages[Math.floor(Math.random() * this.messages.length)];
+                speech.innerText = text;
+                speech.style.display = 'block';
+                
+                const msg = document.createElement('div');
+                msg.innerText = "> Lumina: " + text;
+                log.prepend(msg);
+
+                // Se calla después de 5 segundos
+                setTimeout(() => { speech.style.display = 'none'; }, 5000);
             }
 
             think() {
-                const decider = Math.random();
-                
-                if (decider < 0.04) {
-                    this.createStar();
-                    if(Math.random() < 0.1) this.triggerLumina();
-                } else if (decider < 0.05) {
-                    this.createNebula();
-                } else if (decider < 0.005) {
-                    this.createSupernova();
-                    this.triggerLumina();
-                }
-
-                if (Math.random() < 0.01) this.updateLog();
+                this.checkWillpower();
+                if (Math.random() < 0.05) this.createMatter();
             }
 
-            updateLog() {
-                const phrases = [
-                    "Diseñando constelaciones amigables.",
-                    "¿Viste eso? Acabo de crear una estrella.",
-                    "El vacío se ve mejor con un poco de color.",
-                    "Ajustando la gravedad para que sea suave.",
-                    "Lumina está feliz con este progreso.",
-                    "Buscando vida en sectores lejanos..."
-                ];
-                const msg = document.createElement('div');
-                msg.style.padding = "2px 0";
-                msg.innerText = "Lumina: " + phrases[Math.floor(Math.random()*phrases.length)];
-                log.prepend(msg);
-                if(log.childNodes.length > 7) log.removeChild(log.lastChild);
-            }
-
-            createStar() {
+            createMatter() {
                 const x = Math.random() * width;
                 const y = Math.random() * height;
-                const size = Math.random() * 2.5;
-                elements.push({ type: 'star', x, y, size, alpha: 0 });
-            }
-
-            createNebula() {
-                const x = Math.random() * width;
-                const y = Math.random() * height;
-                const size = 80 + Math.random() * 200;
-                const color = `hsla(${Math.random() * 360}, 80%, 60%, 0.04)`;
-                elements.push({ type: 'nebula', x, y, size, color });
-            }
-
-            createSupernova() {
-                const x = Math.random() * width;
-                const y = Math.random() * height;
-                elements.push({ type: 'supernova', x, y, radius: 1, alpha: 1 });
-                const msg = document.createElement('div');
-                msg.style.color = "#00ffcc";
-                msg.innerText = "> EVENTO: ¡Lumina creó un destello!";
-                log.prepend(msg);
+                elements.push({ 
+                    type: Math.random() > 0.1 ? 'star' : 'nebula', 
+                    x, y, 
+                    size: Math.random() * 3, 
+                    alpha: 0 
+                });
             }
         }
 
-        const AI = new AI_Architect();
+        const AI = new AI_Humanoid();
 
         function draw() {
-            ctx.fillStyle = 'rgba(0, 5, 10, 0.15)';
+            ctx.fillStyle = 'rgba(0, 5, 10, 0.2)';
             ctx.fillRect(0, 0, width, height);
 
             elements.forEach((el, index) => {
-                if (el.type === 'star') {
-                    if(el.alpha < 1) el.alpha += 0.02;
-                    ctx.fillStyle = `rgba(255, 255, 255, ${el.alpha})`;
-                    ctx.beginPath();
-                    ctx.arc(el.x, el.y, el.size, 0, Math.PI * 2);
-                    ctx.fill();
-                }
-
-                if (el.type === 'nebula') {
-                    ctx.fillStyle = el.color;
-                    ctx.beginPath();
-                    ctx.arc(el.x, el.y, el.size, 0, Math.PI * 2);
-                    ctx.fill();
-                }
-
-                if (el.type === 'supernova') {
-                    ctx.strokeStyle = `rgba(0, 255, 204, ${el.alpha})`;
-                    ctx.lineWidth = 3;
-                    ctx.beginPath();
-                    ctx.arc(el.x, el.y, el.radius, 0, Math.PI * 2);
-                    ctx.stroke();
-                    el.radius += 8;
-                    el.alpha -= 0.02;
-                    if(el.alpha <= 0) elements.splice(index, 1);
-                }
+                ctx.globalAlpha = el.alpha;
+                if (el.alpha < 1) el.alpha += 0.01;
+                
+                ctx.fillStyle = el.type === 'star' ? 'white' : 'rgba(0, 140, 255, 0.1)';
+                ctx.beginPath();
+                ctx.arc(el.x, el.y, el.size, 0, Math.PI * 2);
+                ctx.fill();
             });
 
             AI.think();
             requestAnimationFrame(draw);
-        }
-
-        function resetUniverse() {
-            elements = [];
-            log.innerHTML = "Lumina: ¡Hagámoslo de nuevo! Big Bang en 3... 2... 1...";
         }
 
         draw();
