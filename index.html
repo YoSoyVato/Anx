@@ -9,7 +9,6 @@
         body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: var(--bg); color: white; font-family: 'Courier New', monospace; overflow: hidden; }
         canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; image-rendering: pixelated; }
         
-        /* UI Santino Original Recuperada */
         #ai-brain { position: fixed; bottom: 20px; left: 20px; z-index: 1000; background: rgba(0,5,15,0.95); padding: 15px; border-radius: 8px; border: 1px solid var(--accent); width: 280px; pointer-events: none; box-shadow: 0 0 25px rgba(0,140,255,0.4); }
         #ai-log { height: 110px; overflow-y: auto; font-size: 0.7rem; margin-top: 5px; color: #7af; scrollbar-width: none; line-height: 1.2; }
         .glitch { animation: glitch 1.2s infinite; }
@@ -31,8 +30,9 @@
         .slot { width: 50px; height: 50px; background: rgba(0,10,20,0.8); border: 2px solid #333; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 0.6rem; color: #666; transition: 0.3s; }
         .slot.active { border-color: var(--ai-color); box-shadow: 0 0 15px var(--ai-color); color: white; transform: translateY(-5px); }
 
-        /* Efecto de Scanlines */
         .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 2000; background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.02), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.02)); background-size: 100% 3px, 3px 100%; }
+        
+        #menu-hint { position: fixed; width: 100%; text-align: center; top: 70%; font-size: 1.2rem; text-shadow: 0 0 10px white; }
     </style>
 </head>
 <body>
@@ -62,6 +62,7 @@
     </div>
 
     <div id="crosshair"></div>
+    <div id="menu-hint">PULSA [ESPACIO] PARA CREAR MUNDOS</div>
 
     <div id="lumina-container">
         <div style="position: absolute; top: -90px; right: -30px; background: white; color: black; padding: 15px; border-radius: 12px; font-size: 0.8rem; width: 220px; font-weight: bold; border-left: 5px solid var(--ai-color);" id="ai-msg"></div>
@@ -76,6 +77,7 @@
         
         let width, height, inGame = false, frames = 0;
         let selectedSlot = 0;
+        let portals = [];
 
         let player = {
             x: 0, z: 0, yaw: 0,
@@ -104,36 +106,63 @@
             height = canvas.height = window.innerHeight;
         }
         window.addEventListener('resize', resize);
+        
         window.addEventListener('keydown', e => {
             keys[e.code] = true;
+            if(e.code === 'Space' && !inGame) spawnPortals();
             if(e.key >= 1 && e.key <= 3) {
                 selectedSlot = parseInt(e.key) - 1;
                 updateSlots();
             }
         });
+
         window.addEventListener('keyup', e => keys[e.code] = false);
-        window.addEventListener('mousedown', () => { if(inGame) { player.isAttacking = true; player.atkFrame = 0; }});
+        
+        window.addEventListener('mousedown', () => { 
+            if(inGame) { 
+                player.isAttacking = true; 
+                player.atkFrame = 0; 
+            } else {
+                checkPortalClick();
+            }
+        });
+
         resize();
 
         function updateSlots() {
             const slots = document.querySelectorAll('.slot');
             slots.forEach((s, i) => s.className = i === selectedSlot ? 'slot active' : 'slot');
-            addLog("Equipando módulo: " + slots[selectedSlot].innerText);
         }
 
-        // --- SISTEMA DE ENTIDADES PROCEDURALES ---
+        function spawnPortals() {
+            portals = [
+                { x: -300, z: 800, type: 'ESTELAR', color: '#00ffcc', label: 'MUNDO ESTELAR' },
+                { x: 300, z: 800, type: 'TÉTRICO', color: '#ff0033', label: 'MUNDO TÉTRICO' }
+            ];
+            document.getElementById('menu-hint').style.display = 'none';
+            addLog("Portales de realidad generados.");
+        }
+
+        function checkPortalClick() {
+            portals.forEach(p => {
+                let dx = p.x - player.x, dz = p.z - player.z;
+                let rz = dx * Math.sin(-player.yaw) + dz * Math.cos(-player.yaw);
+                if(rz > 0 && rz < 1000) {
+                    initWorld(p.type);
+                }
+            });
+        }
+
         class Entity {
             constructor(x, z, type) {
                 this.x = x; this.z = z; this.type = type;
-                this.seed = Math.random() * 1000;
                 this.timer = Math.random() * 10;
-                
-                // Variaciones únicas para animales
                 this.config = {
-                    bodyW: 30 + Math.random() * 40,
-                    bodyH: 20 + Math.random() * 30,
-                    eyeCount: Math.floor(Math.random() * 4) + 1,
-                    legSpeed: 5 + Math.random() * 10,
+                    bodyW: 20 + Math.random() * 80,
+                    bodyH: 15 + Math.random() * 100,
+                    eyeCount: Math.floor(Math.random() * 6) + 1,
+                    eyeSize: 2 + Math.random() * 8,
+                    legSpeed: 3 + Math.random() * 12,
                     hue: Math.random() * 360
                 };
             }
@@ -141,8 +170,8 @@
             update() {
                 this.timer += 0.03;
                 if(this.type === 'creature') {
-                    this.x += Math.sin(this.timer * 0.5) * 2;
-                    this.z += Math.cos(this.timer * 0.3) * 2;
+                    this.x += Math.sin(this.timer * 0.4) * 3;
+                    this.z += Math.cos(this.timer * 0.2) * 3;
                 }
             }
 
@@ -152,69 +181,60 @@
 
                 if(this.type === 'creature') {
                     ctx.save();
-                    ctx.fillStyle = this.type === 'creature' ? `hsl(${this.config.hue}, 70%, 50%)` : '#fff';
-                    if(currentWorld.accent === '#ff0033') ctx.fillStyle = '#ff0033'; // Rojo en modo tétrico
-
-                    // Cuerpo Único
-                    ctx.shadowBlur = 15 * s;
-                    ctx.shadowColor = ctx.fillStyle;
+                    ctx.fillStyle = currentWorld.accent === '#ff0033' ? '#200' : `hsl(${this.config.hue}, 80%, 40%)`;
+                    ctx.shadowBlur = 20 * s;
+                    ctx.shadowColor = currentWorld.accent;
+                    
+                    // Cuerpo
                     ctx.fillRect(x2d - (this.config.bodyW*s)/2, y2d - this.config.bodyH*s - bounce, this.config.bodyW*s, this.config.bodyH*s);
 
-                    // Piernas
+                    // Piernas deformes
                     ctx.strokeStyle = ctx.fillStyle;
-                    ctx.lineWidth = 4 * s;
+                    ctx.lineWidth = 5 * s;
                     for(let i=0; i<4; i++) {
-                        let lx = x2d + (i < 2 ? -15 : 15) * s;
-                        let legMov = Math.sin(this.timer * this.config.legSpeed + i) * 10 * s;
+                        let lx = x2d + (i < 2 ? -this.config.bodyW/3 : this.config.bodyW/3) * s;
+                        let legMov = Math.sin(this.timer * this.config.legSpeed + i) * 20 * s;
                         ctx.beginPath();
-                        ctx.moveTo(lx, y2d - 10*s - bounce);
-                        ctx.lineTo(lx + legMov, y2d - bounce/2);
+                        ctx.moveTo(lx, y2d - 5*s - bounce);
+                        ctx.lineTo(lx + legMov, y2d - bounce/3);
                         ctx.stroke();
                     }
 
-                    // Ojos Detallados (Procedurales)
-                    ctx.fillStyle = "white";
-                    ctx.shadowBlur = 10 * s;
+                    // OJOS (Mejorados Santino)
+                    ctx.fillStyle = currentWorld.accent === '#ff0033' ? "#ff0000" : "#fff";
                     for(let i=0; i < this.config.eyeCount; i++) {
-                        let ex = x2d - (10 * s) + (i * 8 * s);
-                        ctx.fillRect(ex, y2d - this.config.bodyH*s - bounce + 5*s, 5*s, 5*s);
+                        let ex = x2d - (this.config.bodyW/4 * s) + (i * (this.config.bodyW/this.config.eyeCount) * s);
+                        let ey = y2d - this.config.bodyH*s - bounce + (10*s) + (Math.sin(i)*10*s);
+                        ctx.beginPath();
+                        ctx.arc(ex, ey, this.config.eyeSize * s, 0, Math.PI*2);
+                        ctx.fill();
+                        if(currentWorld.accent === '#ff0033') {
+                            ctx.shadowBlur = 15 * s;
+                            ctx.shadowColor = "red";
+                        }
                     }
                     ctx.restore();
                 } else {
-                    // Estructuras (Edificios)
-                    ctx.fillStyle = `rgba(10, 15, 30, 0.9)`;
-                    let w = 150 * s, h = 600 * s;
+                    ctx.fillStyle = `rgba(5, 5, 10, 0.95)`;
+                    let w = 200 * s, h = 800 * s;
                     ctx.fillRect(x2d - w/2, y2d - h, w, h);
                     ctx.strokeStyle = currentWorld.accent;
-                    ctx.lineWidth = 2 * s;
                     ctx.strokeRect(x2d - w/2, y2d - h, w, h);
-                    
-                    // Ventanas
-                    ctx.fillStyle = currentWorld.accent;
-                    ctx.globalAlpha = 0.3;
-                    for(let j=0; j<5; j++) ctx.fillRect(x2d - w/4, y2d - h + (j*100*s), w/2, 5*s);
-                    ctx.globalAlpha = 1;
                 }
             }
         }
 
-        // --- MANOS SANTINO RUIZ V2 ---
         function drawHands() {
             const time = Date.now() * 0.005;
             player.bob += Math.hypot(player.vX, player.vZ) * 0.12;
-            
             let swayX = Math.cos(player.bob * 0.5) * 15;
             let swayY = Math.sin(player.bob) * 10;
-            let atkOffset = Math.sin(player.atkFrame) * 60;
-
+            let atkOffset = Math.sin(player.atkFrame) * 80;
             ctx.save();
-            // Mano Izquierda
             drawArm(width * 0.25 + swayX, height + 50 - swayY, true, time, 0);
-            // Mano Derecha (Acción)
             drawArm(width * 0.75 + swayX, height + 50 - swayY - atkOffset, false, time, atkOffset);
-            
             if(player.isAttacking) {
-                player.atkFrame += 0.2;
+                player.atkFrame += 0.25;
                 if(player.atkFrame > Math.PI) { player.atkFrame = 0; player.isAttacking = false; }
             }
             ctx.restore();
@@ -222,104 +242,52 @@
 
         function drawArm(x, y, isLeft, t, atk) {
             let s = isLeft ? 1 : -1;
-            ctx.shadowBlur = 40;
-            ctx.shadowColor = "black";
-
-            // Manga con sombreado
-            let grad = ctx.createLinearGradient(x, y, x + 100*s, y - 400);
-            grad.addColorStop(0, "#050505");
-            grad.addColorStop(1, "#15151a");
-            ctx.fillStyle = grad;
-
+            ctx.fillStyle = "#0a0a0c";
             ctx.beginPath();
             ctx.moveTo(x, y);
-            ctx.lineTo(x - 90*s, y - 450);
-            ctx.lineTo(x + 130*s, y - 450);
-            ctx.lineTo(x + 50*s, y);
+            ctx.lineTo(x - 100*s, y - 500);
+            ctx.lineTo(x + 150*s, y - 500);
+            ctx.lineTo(x + 60*s, y);
             ctx.fill();
-
-            // Líneas de Neón en el brazo
             ctx.strokeStyle = currentWorld.accent;
-            ctx.lineWidth = 1.5;
-            ctx.globalAlpha = 0.5;
-            ctx.beginPath();
-            ctx.moveTo(x + 10*s, y);
-            ctx.lineTo(x - 40*s, y - 300);
+            ctx.lineWidth = 2;
             ctx.stroke();
-            ctx.globalAlpha = 1;
-
-            // Guante Táctico
-            ctx.fillStyle = "#111";
-            ctx.beginPath();
-            ctx.roundRect(x + (isLeft ? -65 : -85), y - 480 + Math.sin(t)*5, 140, 100, 20);
-            ctx.fill();
-            ctx.strokeStyle = "#333";
-            ctx.stroke();
-
-            // HUD en el brazo izquierdo
-            if(isLeft) {
-                ctx.fillStyle = currentWorld.accent;
-                ctx.font = "bold 10px Arial";
-                ctx.fillText("SYS_V6.5", x - 20, y - 440);
-                ctx.fillRect(x - 20, y - 435, 40, 2);
-            }
             
-            // Arma (Blade)
+            // Guante
+            ctx.fillStyle = "#111";
+            ctx.fillRect(x + (isLeft ? -70 : -80), y - 520, 150, 120);
+            
             if(!isLeft && selectedSlot === 2) {
                 ctx.fillStyle = currentWorld.accent;
-                ctx.shadowBlur = 30;
-                ctx.fillRect(x - 5*s, y - 750, 10, 300);
-                ctx.shadowBlur = 0;
+                ctx.shadowBlur = 40;
+                ctx.fillRect(x - 10*s, y - 850, 20, 400);
             }
         }
 
-        // --- MUNDO Y LÓGICA ---
         function initWorld(mode) {
             inGame = true;
+            portals = [];
             currentWorld.entities = [];
             currentWorld.weather = [];
             
             if(mode === 'TÉTRICO') {
-                currentWorld.colors = { bg: '#080000', accent: '#ff0033', fog: '#050000' };
-                for(let i=0; i<150; i++) currentWorld.weather.push({x: Math.random()*width, y: Math.random()*height, s: Math.random()*4+2});
+                currentWorld.colors = { bg: '#050000', accent: '#ff0033', fog: '#0a0000' };
+                for(let i=0; i<200; i++) currentWorld.weather.push({x: Math.random()*width, y: Math.random()*height, s: Math.random()*10+5});
             } else {
                 currentWorld.colors = { bg: '#00050a', accent: '#00ffcc', fog: '#000205' };
             }
 
-            // Generar Entidades
-            for(let i=0; i<100; i++) {
-                let type = Math.random() > 0.7 ? 'creature' : 'structure';
-                let dist = 600 + Math.random() * 5000;
+            for(let i=0; i<80; i++) {
+                let type = Math.random() > 0.6 ? 'creature' : 'structure';
+                let dist = 800 + Math.random() * 6000;
                 let ang = Math.random() * Math.PI * 2;
                 currentWorld.entities.push(new Entity(Math.cos(ang)*dist, Math.sin(ang)*dist, type));
             }
 
             document.getElementById('game-hud').style.display = 'block';
             document.getElementById('crosshair').style.display = 'block';
-            document.getElementById('world-name').innerText = "WORLD_GEN: " + mode;
-            addLog("Mundo " + mode + " generado con éxito.");
-        }
-
-        function update() {
-            if(inGame) {
-                let moveSpeed = keys['ShiftLeft'] ? 18 : 9;
-                let dx = 0, dz = 0;
-                if(keys['KeyW']) { dx += Math.sin(player.yaw) * moveSpeed; dz -= Math.cos(player.yaw) * moveSpeed; }
-                if(keys['KeyS']) { dx -= Math.sin(player.yaw) * moveSpeed; dz += Math.cos(player.yaw) * moveSpeed; }
-                if(keys['KeyA']) player.yaw -= 0.05;
-                if(keys['KeyD']) player.yaw += 0.05;
-
-                // Colisión básica
-                player.x += dx; player.z += dz;
-                player.vX = dx; player.vZ = dz;
-
-                currentWorld.entities.forEach(e => e.update());
-                currentWorld.weather.forEach(p => {
-                    p.y += p.s;
-                    if(p.y > height) p.y = -20;
-                });
-            }
-            frames++;
+            document.getElementById('world-name').innerText = "REALITY_PHASE: " + mode;
+            addLog("Inmersión completa en: " + mode);
         }
 
         function draw() {
@@ -327,55 +295,72 @@
             ctx.fillRect(0,0,width,height);
 
             if(inGame) {
-                // Render 3D Proyectado
+                // Movimiento
+                let moveSpeed = keys['ShiftLeft'] ? 25 : 12;
+                if(keys['KeyW']) { player.x += Math.sin(player.yaw) * moveSpeed; player.z -= Math.cos(player.yaw) * moveSpeed; }
+                if(keys['KeyS']) { player.x -= Math.sin(player.yaw) * moveSpeed; player.z += Math.cos(player.yaw) * moveSpeed; }
+                if(keys['KeyA']) player.yaw -= 0.05;
+                if(keys['KeyD']) player.yaw += 0.05;
+
                 let renderList = currentWorld.entities.map(e => {
                     let dx = e.x - player.x, dz = e.z - player.z;
                     let rx = dx * Math.cos(-player.yaw) - dz * Math.sin(-player.yaw);
                     let rz = dx * Math.sin(-player.yaw) + dz * Math.cos(-player.yaw);
                     return { e, rx, rz };
-                }).filter(r => r.rz > 20).sort((a,b) => b.rz - a.rz);
+                }).filter(r => r.rz > 50).sort((a,b) => b.rz - a.rz);
 
                 renderList.forEach(r => {
-                    let scale = 1100 / r.rz;
-                    let x2d = r.rx * scale + width/2;
-                    let y2d = height/2 + (100 * scale);
-                    r.e.draw(scale, x2d, y2d);
+                    let scale = 1200 / r.rz;
+                    r.e.draw(scale, r.rx * scale + width/2, height/2 + (150 * scale));
                 });
 
-                // Clima
-                ctx.fillStyle = currentWorld.colors.accent;
-                currentWorld.weather.forEach(p => ctx.fillRect(p.x, p.y, 2, p.s * 3));
+                // Clima tétrico mejorado
+                if(currentWorld.accent === '#ff0033') {
+                    ctx.fillStyle = "rgba(255, 0, 0, 0.05)";
+                    currentWorld.weather.forEach(p => {
+                        ctx.fillRect(p.x, p.y, 1, p.s * 5);
+                        p.y += p.s;
+                        if(p.y > height) p.y = -50;
+                    });
+                }
 
                 drawHands();
-
-                // Efecto de daño si es tétrico
-                if(currentWorld.accent === '#ff0033' && frames % 100 < 5) {
-                    ctx.fillStyle = "rgba(255,0,0,0.1)";
-                    ctx.fillRect(0,0,width,height);
-                }
             } else {
-                ctx.fillStyle = "white";
-                ctx.textAlign = "center";
-                ctx.font = "25px Courier New";
-                ctx.fillText("GENESIS ENGINE V6.5", width/2, height/2 - 50);
-                ctx.font = "14px Courier New";
-                ctx.fillText("PULSA [W] NORMAL | [T] TÉTRICO", width/2, height/2);
-                if(keys['KeyW']) initWorld('ESTELAR');
-                if(keys['KeyT']) initWorld('TÉTRICO');
+                // ESPACIO DE SELECCIÓN
+                portals.forEach(p => {
+                    let dx = p.x - player.x, dz = p.z - player.z;
+                    let rx = dx * Math.cos(-player.yaw) - dz * Math.sin(-player.yaw);
+                    let rz = dx * Math.sin(-player.yaw) + dz * Math.cos(-player.yaw);
+                    if(rz > 50) {
+                        let scale = 1000 / rz;
+                        let x2d = rx * scale + width/2;
+                        let y2d = height/2;
+                        ctx.fillStyle = p.color;
+                        ctx.shadowBlur = 50 * scale;
+                        ctx.shadowColor = p.color;
+                        ctx.beginPath();
+                        ctx.ellipse(x2d, y2d, 100*scale, 200*scale, 0, 0, Math.PI*2);
+                        ctx.fill();
+                        ctx.fillStyle = "white";
+                        ctx.font = `${20*scale}px Arial`;
+                        ctx.fillText(p.label, x2d, y2d + 250*scale);
+                    }
+                });
+                
+                if(keys['KeyA']) player.yaw -= 0.03;
+                if(keys['KeyD']) player.yaw += 0.03;
             }
 
-            update();
+            frames++;
             requestAnimationFrame(draw);
         }
 
-        // IA Lumina
         setTimeout(() => {
             const container = document.getElementById('lumina-container');
-            const msg = document.getElementById('ai-msg');
             container.classList.add('visible');
-            msg.innerText = "¡SANTINO! He restaurado los ojos brillantes y calibrado la anatomía de las criaturas. El motor es ahora 200% más inmersivo.";
+            document.getElementById('ai-msg').innerText = "¡SANTINO! He mutado a las criaturas y habilitado los portales interdimensionales. Pulsa ESPACIO para empezar.";
             setTimeout(() => container.classList.remove('visible'), 6000);
-        }, 2000);
+        }, 1500);
 
         draw();
     </script>
