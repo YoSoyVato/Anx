@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ANX - Genesis Engine V9.8 (CAINE AI EDITION)</title>
+    <title>ANX - Genesis Engine V10 (AI SELF-AWARE WORLD)</title>
     <style>
         :root { --accent: #008cff; --bg: #000103; --ai-color: #00ffcc; }
         body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: var(--bg); color: white; font-family: 'Courier New', monospace; overflow: hidden; }
@@ -12,15 +12,9 @@
         #ai-brain { position: fixed; bottom: 20px; left: 20px; z-index: 1000; background: rgba(0,5,15,0.9); padding: 15px; border-radius: 8px; border: 1px solid var(--accent); width: 280px; pointer-events: none; }
         #ai-log { height: 90px; overflow-y: auto; font-size: 0.7rem; margin-top: 5px; color: #7af; scrollbar-width: none; }
 
-        #game-hud { position: fixed; top: 20px; left: 20px; display: none; background: rgba(0,0,0,0.8); padding: 20px; border-left: 5px solid var(--ai-color); z-index: 1000; }
-        #menu-hint { position: fixed; width: 100%; text-align: center; top: 10%; font-size: 1.2rem; color: var(--ai-color); text-shadow: 0 0 15px var(--ai-color); pointer-events: none; font-weight: bold; }
-
-        #lumina-container { position: fixed; bottom: -350px; right: 50px; width: 140px; height: 220px; z-index: 1000; transition: 1s; }
-        #lumina-container.visible { bottom: 40px; }
+        #lumina-container { position: fixed; bottom: 40px; right: 50px; width: 140px; height: 220px; z-index: 1000; opacity: 0; transition: 1s; }
+        #lumina-container.visible { opacity: 1; }
         .ai-core { width: 40px; height: 40px; background: #fff; border-radius: 50%; margin: 0 auto; box-shadow: 0 0 30px var(--ai-color); }
-        
-        .scary-flash { animation: scary 0.15s infinite; }
-        @keyframes scary { 0% { opacity: 1; } 50% { opacity: 0.8; filter: contrast(2) brightness(0.8) sepia(1) hue-rotate(-50deg); } 100% { opacity: 1; } }
     </style>
 </head>
 <body>
@@ -28,16 +22,9 @@
     <canvas id="universe-canvas"></canvas>
     
     <div id="ai-brain">
-        <div style="color:var(--ai-color); font-weight:bold;">GENESIS_V9.8_CORE</div>
-        <div id="ai-log">Analizando extremidades del sujeto...</div>
+        <div style="color:var(--ai-color); font-weight:bold;">GENESIS_V10_CORE</div>
+        <div id="ai-log">Iniciando consciencia creativa...</div>
     </div>
-
-    <div id="game-hud">
-        <b id="world-name">SYNCING...</b><br>
-        <small>PULSA [ESC] PARA RETROCEDER AL ESPACIO</small>
-    </div>
-
-    <div id="menu-hint">SANTINO, EL MULTIVERSO TE ESPERA</div>
 
     <div id="lumina-container">
         <div style="position: absolute; top: -80px; right: -20px; background: white; color: black; padding: 12px; border-radius: 10px; font-size: 0.75rem; width: 200px; font-weight: bold;" id="ai-msg"></div>
@@ -49,13 +36,10 @@
         const ctx = canvas.getContext('2d');
         const log = document.getElementById('ai-log');
         
-        let width, height, inGame = false, frames = 0;
-        let portals = [];
-        let stars = [];
-
-        // CAMBIO CRÍTICO: El jugador empieza en Z=0, los mundos en Z=3000. Distancia masiva para que no pegue el "tosco".
-        let player = { x: 0, z: 0, yaw: 0, targetYaw: 0, isMoving: false };
-        let currentWorld = { mode: '', entities: [], animals: [], colors: {}, isScary: false, aiVisible: false, aiScale: 0 };
+        let width, height, frames = 0;
+        let player = { x: 0, z: 1000, yaw: 0, targetYaw: 0, isMoving: false };
+        let world = { entities: [], animals: [], time: 0, dayColor: {r: 0, g: 3, b: 15}, nightColor: {r: 0, g: 0, b: 2} };
+        let lumina = { x: 0, z: 0, active: false, scale: 0, lastTalk: 0 };
         const keys = {};
 
         function addLog(msg) {
@@ -68,253 +52,152 @@
             width = canvas.width = window.innerWidth;
             height = canvas.height = window.innerHeight;
         }
+
         window.addEventListener('resize', resize);
-        window.addEventListener('keydown', e => {
-            keys[e.code] = true;
-            if(e.code === 'Escape' && inGame) {
-                inGame = false;
-                document.body.classList.remove('scary-flash');
-                addLog("Desconectando interfaz neuronal...");
-                player.x = 0; player.z = 0;
-                document.getElementById('lumina-container').classList.add('visible');
-            }
-        });
+        window.addEventListener('keydown', e => keys[e.code] = true);
         window.addEventListener('keyup', e => keys[e.code] = false);
-        window.addEventListener('mousedown', () => { if(!inGame) portals.forEach(p => { if(p.hovered) initWorld(p); }); });
 
-        resize();
-        for(let i=0; i<350; i++) stars.push({x: Math.random()*4000 - 2000, y: Math.random()*4000 - 2000, z: Math.random()*3000});
-
-        function autoSpawn() {
-            const config = [
-                {col: '#00f2ff', scary: false, name: "NEBULA-7"},
-                {col: '#ff0000', scary: true, name: "VOID_KILLER"},
-                {col: '#ffcc00', scary: false, name: "GOLDEN_HUB"},
-                {col: '#a200ff', scary: false, name: "HYPER_ZONE"}
-            ];
-            // MEJORA: Mundos colocados en un arco mucho más lejano y abierto
-            for(let i=0; i<4; i++) {
-                let spacing = 1200;
-                portals.push({
-                    x: (i - 1.5) * spacing,
-                    z: 2500, // Distancia inicial masiva
-                    label: config[i].name,
-                    color: config[i].col,
-                    isScary: config[i].scary,
-                    hovered: false,
-                    rot: Math.random() * Math.PI
-                });
-            }
-        }
-
-        // IA 3D ESTILO CAINE (CORE CON CARA)
+        // IA 3D ESTILO CAINE
         class LuminaEntity {
-            constructor() { this.x = 0; this.z = 0; this.active = false; }
             draw(scale, x2d, y2d) {
-                if(!this.active) return;
-                
+                if(!lumina.active) return;
                 let float = Math.sin(frames * 0.15) * 15 * scale;
-                let lookDir = Math.sin(frames * 0.05) * 10;
-                
-                // Efecto Glitch de aparición
-                if(currentWorld.aiScale < 1) currentWorld.aiScale += 0.05;
+                if(lumina.scale < 1) lumina.scale += 0.05;
 
                 ctx.save();
-                ctx.translate(x2d, y2d - 100*scale + float);
-                ctx.scale(currentWorld.aiScale, currentWorld.aiScale);
-
-                // Cuerpo (Esfera metálica)
+                ctx.translate(x2d, y2d - 120*scale + float);
+                ctx.scale(lumina.scale, lumina.scale);
                 ctx.fillStyle = "#fff";
-                ctx.shadowBlur = 30 * scale; ctx.shadowColor = varColor('--ai-color');
-                ctx.beginPath();
-                ctx.arc(0, 0, 30*scale, 0, Math.PI*2);
-                ctx.fill();
-
-                // Ojos Digitales (Caine style)
-                ctx.fillStyle = "#000";
-                let eyeBlink = Math.random() > 0.98 ? 0.1 : 1;
-                ctx.fillRect(-15*scale + lookDir, -10*scale, 8*scale, 15*scale * eyeBlink);
-                ctx.fillRect(7*scale + lookDir, -10*scale, 8*scale, 15*scale * eyeBlink);
+                ctx.shadowBlur = 30 * scale; ctx.shadowColor = "#00ffcc";
+                ctx.beginPath(); ctx.arc(0, 0, 30*scale, 0, Math.PI*2); ctx.fill();
                 
-                // Boca / Ecualizador
-                ctx.strokeStyle = varColor('--ai-color');
-                ctx.lineWidth = 2 * scale;
-                ctx.beginPath();
-                for(let i=0; i<5; i++) {
-                    let h = Math.random() * 10 * scale;
-                    ctx.moveTo((-10 + i*5)*scale, 10*scale);
-                    ctx.lineTo((-10 + i*5)*scale, (10 + h)*scale);
-                }
-                ctx.stroke();
-
+                // Ojos
+                ctx.fillStyle = "#000";
+                let blink = Math.random() > 0.98 ? 0.1 : 1;
+                ctx.fillRect(-15*scale, -10*scale, 8*scale, 15*scale * blink);
+                ctx.fillRect(7*scale, -10*scale, 8*scale, 15*scale * blink);
                 ctx.restore();
-                ctx.shadowBlur = 0;
             }
         }
 
-        function varColor(name) { return getComputedStyle(document.documentElement).getPropertyValue(name); }
-
         class Structure {
-            constructor(x, z, color) {
-                this.x = x; this.z = z; this.color = color;
-                this.h = 400 + Math.random() * 800;
-                this.w = 70;
+            constructor(x, z) {
+                this.x = x; this.z = z;
+                this.h = 400 + Math.random() * 900;
+                this.w = 80;
+                this.color = `hsl(${Math.random()*360}, 70%, 50%)`;
             }
-            draw(scale, x2d, y2d) {
-                ctx.strokeStyle = this.color;
-                ctx.lineWidth = 2 * scale;
+            draw(scale, x2d, y2d, brightness) {
+                ctx.globalAlpha = brightness;
+                ctx.strokeStyle = this.color; ctx.lineWidth = 2 * scale;
                 ctx.strokeRect(x2d - (this.w*scale)/2, y2d - this.h*scale, this.w*scale, this.h*scale);
-                ctx.fillStyle = this.color; ctx.globalAlpha = 0.2;
+                ctx.fillStyle = this.color; ctx.globalAlpha = 0.1 * brightness;
                 ctx.fillRect(x2d - (this.w*scale)/2, y2d - this.h*scale, this.w*scale, this.h*scale);
                 ctx.globalAlpha = 1;
             }
         }
 
         class Animal {
-            constructor(x, z, color, scary) {
-                this.x = x; this.z = z; this.color = color; this.scary = scary;
+            constructor(x, z) {
+                this.x = x; this.z = z;
                 this.angle = Math.random() * Math.PI * 2;
+                this.type = Math.random() > 0.5 ? 'bird' : 'cube';
             }
             update() {
-                if(!this.scary) {
-                    this.x += Math.cos(this.angle) * 3; this.z += Math.sin(this.angle) * 3;
-                    if(Math.random() > 0.98) this.angle = Math.random() * Math.PI * 2;
-                }
+                this.x += Math.cos(this.angle) * 4;
+                this.z += Math.sin(this.angle) * 4;
+                if(Math.random() > 0.98) this.angle = Math.random() * Math.PI * 2;
             }
             draw(scale, x2d, y2d) {
-                ctx.fillStyle = this.scary ? "#300" : this.color;
-                ctx.beginPath(); ctx.arc(x2d, y2d - 15*scale, 15*scale, 0, Math.PI*2); ctx.fill();
-                ctx.fillStyle = "white";
-                ctx.beginPath(); ctx.arc(x2d-5*scale, y2d-18*scale, 3*scale, 0, Math.PI*2); 
-                ctx.arc(x2d+5*scale, y2d-18*scale, 3*scale, 0, Math.PI*2); ctx.fill();
+                ctx.fillStyle = "#00ffcc";
+                ctx.beginPath();
+                ctx.arc(x2d, y2d - (this.type === 'bird' ? 100 : 10)*scale, 10*scale, 0, Math.PI*2);
+                ctx.fill();
             }
         }
 
-        function drawArms() {
-            let bob = Math.sin(frames * 0.15) * (player.isMoving ? 12 : 3);
-            ctx.fillStyle = "#111"; ctx.strokeStyle = currentWorld.colors.accent;
-            ctx.lineWidth = 3;
-            ctx.save();
-            ctx.translate(width*0.2, height + 30 + bob); ctx.rotate(-0.1); ctx.fillRect(0, -250, 100, 400); ctx.strokeRect(0, -250, 100, 400);
-            ctx.restore();
-            ctx.save();
-            ctx.translate(width*0.8 - 100, height + 30 + bob); ctx.rotate(0.1); ctx.fillRect(0, -250, 100, 400); ctx.strokeRect(0, -250, 100, 400);
-            ctx.restore();
+        function init() {
+            resize();
+            addLog("Mundo generado por IA.");
+            for(let i=0; i<80; i++) spawnObject();
+            draw();
         }
 
-        function updateAIMessage(txt) {
-            document.getElementById('ai-msg').innerText = txt;
-        }
-
-        function initWorld(p) {
-            inGame = true;
-            player.x = 0; player.z = 1000; player.yaw = 0; player.targetYaw = 0;
-            currentWorld.entities = [];
-            currentWorld.animals = [];
-            currentWorld.lumina = new LuminaEntity();
-            currentWorld.aiScale = 0;
-            currentWorld.colors = { bg: p.isScary ? '#1a0000' : '#00030a', accent: p.color };
-            
-            document.getElementById('lumina-container').classList.remove('visible');
-
-            // APARICIÓN TIPO CAINE: La IA aparece después de 1.5 segundos
-            setTimeout(() => {
-                currentWorld.lumina.active = true;
-                addLog("ENTIDAD 'LUMINA_CORE' MANIFESTADA.");
-                updateAIMessage(p.isScary ? "SANTINO... ELLOS SABEN QUE ESTÁS AQUÍ." : "¡Bienvenido al sector, Santino!");
-            }, 1500);
-
-            for(let i=0; i<50; i++) {
-                let a = Math.random()*Math.PI*2, d = 1500+Math.random()*4000;
-                currentWorld.entities.push(new Structure(Math.cos(a)*d, Math.sin(a)*d, p.color));
-            }
-            
-            document.getElementById('game-hud').style.display = 'block';
-            document.getElementById('world-name').innerText = p.label;
-            document.getElementById('world-name').style.color = p.color;
+        function spawnObject() {
+            let a = Math.random()*Math.PI*2, d = 1000 + Math.random()*8000;
+            world.entities.push(new Structure(player.x + Math.cos(a)*d, player.z + Math.sin(a)*d));
+            if(Math.random() > 0.7) world.animals.push(new Animal(player.x + Math.cos(a)*d, player.z + Math.sin(a)*d));
         }
 
         function draw() {
-            ctx.fillStyle = inGame ? currentWorld.colors.bg : "#000105";
+            // SISTEMA DE DÍA Y NOCHE (Ciclo de 2000 frames)
+            world.time = (frames % 2000) / 2000;
+            let dayIntensity = Math.sin(world.time * Math.PI); 
+            let r = Math.floor(world.nightColor.r + (world.dayColor.r - world.nightColor.r) * dayIntensity);
+            let g = Math.floor(world.nightColor.g + (world.dayColor.g - world.nightColor.g) * dayIntensity);
+            let b = Math.floor(world.nightColor.b + (world.dayColor.b - world.nightColor.b) * dayIntensity);
+            
+            ctx.fillStyle = `rgb(${r},${g},${b})`;
             ctx.fillRect(0,0,width,height);
 
+            // MOVIMIENTO
+            player.isMoving = keys['KeyW'] || keys['KeyS'];
+            if(keys['KeyW']) { player.x += Math.sin(player.yaw) * 35; player.z -= Math.cos(player.yaw) * 35; }
+            if(keys['KeyS']) { player.x -= Math.sin(player.yaw) * 35; player.z += Math.cos(player.yaw) * 35; }
+            if(keys['KeyA']) player.targetYaw -= 0.05;
+            if(keys['KeyD']) player.targetYaw += 0.05;
             player.yaw += (player.targetYaw - player.yaw) * 0.1;
 
-            if(inGame) {
-                player.isMoving = keys['KeyW'] || keys['KeyS'];
-                let spd = 30;
-                if(keys['KeyW']) { player.x += Math.sin(player.yaw) * spd; player.z -= Math.cos(player.yaw) * spd; }
-                if(keys['KeyS']) { player.x -= Math.sin(player.yaw) * spd; player.z += Math.cos(player.yaw) * spd; }
-                if(keys['KeyA']) player.targetYaw -= 0.06;
-                if(keys['KeyD']) player.targetYaw += 0.06;
-
-                // Lumina te sigue flotando enfrente
-                currentWorld.lumina.x = player.x + Math.sin(player.yaw) * 450;
-                currentWorld.lumina.z = player.z - Math.cos(player.yaw) * 450;
-
-                let objs = [...currentWorld.entities, ...currentWorld.animals, currentWorld.lumina].sort((a,b) => {
-                    return Math.hypot(b.x-player.x, b.z-player.z) - Math.hypot(a.x-player.x, a.z-player.z);
-                });
-
-                objs.forEach(e => {
-                    if(e.update) e.update();
-                    let dx = e.x - player.x, dz = e.z - player.z;
-                    let rx = dx * Math.cos(-player.yaw) - dz * Math.sin(-player.yaw);
-                    let rz = dx * Math.sin(-player.yaw) + dz * Math.cos(-player.yaw);
-                    if(rz > 50) {
-                        let s = 900 / rz;
-                        e.draw(s, rx * s + width/2, height/2 + 250*s);
-                    }
-                });
-                drawArms();
-            } else {
-                // MENU MEJORADO: Cámara lejana
-                stars.forEach(s => {
-                    let x = s.x / (s.z/1000) + width/2; let y = s.y / (s.z/1000) + height/2;
-                    ctx.fillStyle = "white"; ctx.globalAlpha = 1 - s.z/3000;
-                    ctx.fillRect(x, y, 2, 2); s.z -= 5; if(s.z < 1) s.z = 3000;
-                });
-                ctx.globalAlpha = 1;
-
-                portals.forEach(p => {
-                    let dx = p.x - player.x, dz = p.z - player.z;
-                    let rx = dx * Math.cos(-player.yaw) - dz * Math.sin(-player.yaw);
-                    let rz = dx * Math.sin(-player.yaw) + dz * Math.cos(-player.yaw);
-                    
-                    if(rz > 100) {
-                        let s = 1200 / rz; 
-                        let x = rx * s + width/2, y = height/2;
-                        p.hovered = Math.hypot(width/2 - x, height/2 - y) < 130 * s;
-
-                        ctx.save(); ctx.translate(x, y);
-                        if(p.hovered) ctx.scale(1.2, 1.2);
-                        ctx.rotate(frames * 0.02);
-                        ctx.strokeStyle = p.color; ctx.lineWidth = 3*s;
-                        ctx.strokeRect(-80*s, -80*s, 160*s, 160*s);
-                        ctx.restore();
-
-                        ctx.shadowBlur = p.hovered ? 50 : 20; ctx.shadowColor = p.color;
-                        ctx.fillStyle = p.hovered ? "white" : p.color;
-                        ctx.beginPath(); ctx.arc(x, y, 70*s, 0, Math.PI*2); ctx.fill();
-                        ctx.shadowBlur = 0;
-                        ctx.fillStyle = "white"; ctx.font = `bold ${26*s}px Courier`;
-                        ctx.textAlign = "center"; ctx.fillText(p.label, x, y + 180*s);
-                    }
-                });
-                if(keys['KeyA']) player.targetYaw -= 0.04;
-                if(keys['KeyD']) player.targetYaw += 0.04;
+            // IA APARECE DE VEZ EN CUANDO
+            if(frames % 400 === 0) {
+                lumina.active = !lumina.active;
+                lumina.scale = 0;
+                if(lumina.active) {
+                    addLog("Lumina analizando entorno...");
+                    document.getElementById('ai-msg').innerText = "SANTINO, he decidido añadir más estructuras.";
+                    document.getElementById('lumina-container').classList.add('visible');
+                    for(let i=0; i<10; i++) spawnObject();
+                } else {
+                    document.getElementById('lumina-container').classList.remove('visible');
+                }
             }
+
+            lumina.x = player.x + Math.sin(player.yaw) * 500;
+            lumina.z = player.z - Math.cos(player.yaw) * 500;
+
+            let luminaEntity = new LuminaEntity();
+            let objs = [...world.entities, ...world.animals, luminaEntity].sort((a,b) => {
+                let d1 = (a === luminaEntity) ? 500 : Math.hypot(a.x-player.x, a.z-player.z);
+                let d2 = (b === luminaEntity) ? 500 : Math.hypot(b.x-player.x, b.z-player.z);
+                return d2 - d1;
+            });
+
+            objs.forEach(e => {
+                if(e.update) e.update();
+                let ex = (e === luminaEntity) ? lumina.x : e.x;
+                let ez = (e === luminaEntity) ? lumina.z : e.z;
+                
+                let dx = ex - player.x, dz = ez - player.z;
+                let rx = dx * Math.cos(-player.yaw) - dz * Math.sin(-player.yaw);
+                let rz = dx * Math.sin(-player.yaw) + dz * Math.cos(-player.yaw);
+                
+                if(rz > 50) {
+                    let s = 900 / rz;
+                    e.draw(s, rx * s + width/2, height/2 + 250*s, dayIntensity + 0.2);
+                }
+            });
+
+            // BRAZOS
+            let bob = Math.sin(frames * 0.15) * (player.isMoving ? 15 : 5);
+            ctx.fillStyle = "#111"; ctx.strokeStyle = "#008cff";
+            ctx.fillRect(width*0.1, height-200+bob, 120, 300);
+            ctx.fillRect(width*0.8, height-200+bob, 120, 300);
+
             frames++;
             requestAnimationFrame(draw);
         }
 
-        setTimeout(() => {
-            autoSpawn();
-            document.getElementById('lumina-container').classList.add('visible');
-            updateAIMessage("SANTINO, el motor Genesis está listo. Elige un destino.");
-        }, 800);
-
-        draw();
+        init();
     </script>
 </body>
 </html>
