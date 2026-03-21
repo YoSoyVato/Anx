@@ -3,13 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ANX - Genesis AI Humanoid</title>
+    <title>ANX - Genesis Game Engine</title>
     <style>
         :root {
             --accent: #008cff;
             --bg: #00050a;
             --ai-color: #00ffcc;
-            --skin: rgba(0, 255, 204, 0.2);
         }
 
         body, html {
@@ -21,133 +20,76 @@
             overflow: hidden;
         }
 
-        #universe-canvas {
-            position: absolute;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            z-index: 1;
-        }
-
-        /* --- LUMINA HUMANOIDE (CSS ART) --- */
+        canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+        #ui-layer { position: relative; z-index: 100; pointer-events: none; width: 100%; height: 100%; }
+        
+        /* --- LUMINA HUMANOIDE --- */
         #lumina-humanoid {
-            position: fixed;
-            bottom: -300px; /* Escondida inicialmente */
-            right: 100px;
-            width: 150px;
-            height: 250px;
-            z-index: 200;
-            transition: all 1s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            pointer-events: none;
-            filter: drop-shadow(0 0 15px var(--ai-color));
-            opacity: 0;
+            position: fixed; bottom: -300px; right: 100px;
+            width: 100px; height: 180px;
+            z-index: 200; transition: all 0.8s ease;
+            filter: drop-shadow(0 0 15px var(--ai-color)); opacity: 0;
         }
-
-        #lumina-humanoid.visible {
-            bottom: 50px;
-            opacity: 1;
-        }
-
-        /* Cabeza */
-        .head {
-            width: 40px; height: 50px;
-            background: var(--ai-color);
-            border-radius: 50% 50% 40% 40%;
-            margin: 0 auto;
-            position: relative;
-            border: 2px solid white;
-        }
-
-        /* Cuerpo/Torso */
-        .torso {
-            width: 60px; height: 80px;
-            background: linear-gradient(to bottom, var(--ai-color), transparent);
-            border-radius: 20px 20px 50% 50%;
-            margin: 5px auto;
-            position: relative;
-            border-top: 2px solid white;
-        }
-
-        /* Capa de energía flotante */
-        .aura {
-            position: absolute;
-            width: 100%; height: 100%;
-            background: var(--ai-color);
-            filter: blur(20px);
-            opacity: 0.3;
-            animation: pulse 2s infinite;
-        }
-
-        /* Bocadillo de Texto (Dialogo) */
+        #lumina-humanoid.visible { bottom: 30px; opacity: 1; }
+        .head { width: 30px; height: 35px; background: var(--ai-color); border-radius: 50%; margin: 0 auto; border: 2px solid #fff; }
+        .torso { width: 45px; height: 60px; background: linear-gradient(var(--ai-color), transparent); border-radius: 10px 10px 50% 50%; margin: 5px auto; border-top: 2px solid #fff; }
+        
         #ai-speech {
-            position: absolute;
-            top: -60px;
-            right: 0;
-            background: white;
-            color: black;
-            padding: 10px;
-            border-radius: 10px;
-            font-size: 0.8rem;
-            width: 180px;
-            display: none;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+            position: absolute; top: -50px; right: 0;
+            background: #fff; color: #000; padding: 8px;
+            border-radius: 10px; font-size: 0.75rem; width: 150px; display: none;
         }
 
-        #ai-speech::after {
-            content: '';
-            position: absolute;
-            bottom: -10px; right: 20px;
-            border-left: 10px solid transparent;
-            border-right: 10px solid transparent;
-            border-top: 10px solid white;
+        /* --- MODO JUEGO --- */
+        #game-ui {
+            position: fixed; top: 20px; left: 20px;
+            display: none; background: rgba(0,0,0,0.7);
+            padding: 15px; border: 1px solid var(--ai-color);
         }
 
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); opacity: 0.3; }
-            50% { transform: scale(1.2); opacity: 0.5; }
+        #crosshair {
+            position: fixed; top: 50%; left: 50%;
+            width: 20px; height: 20px; border: 1px solid var(--ai-color);
+            border-radius: 50%; transform: translate(-50%, -50%);
+            display: none; pointer-events: none;
         }
-
-        /* --- INTERFAZ --- */
-        #ai-brain {
-            position: fixed;
-            bottom: 20px; left: 20px;
-            width: 280px; height: 150px;
-            background: rgba(0, 10, 20, 0.8);
-            border: 1px solid var(--accent);
-            border-radius: 10px;
-            z-index: 100;
-            padding: 15px;
-            font-size: 0.7rem;
-        }
-
-        #ai-log { height: 100px; overflow: hidden; color: var(--ai-color); }
 
     </style>
 </head>
 <body>
 
-    <div id="ai-brain">
-        <div style="color:var(--accent); font-weight:bold; margin-bottom:5px;">NÚCLEO LUMINA V2.0</div>
-        <div id="ai-log">Sincronizando con Santino Ruiz...</div>
-    </div>
-
-    <div id="lumina-humanoid">
-        <div id="ai-speech"></div>
-        <div class="aura"></div>
-        <div class="head"></div>
-        <div class="torso"></div>
-    </div>
-
     <canvas id="universe-canvas"></canvas>
+    
+    <div id="ui-layer">
+        <div id="ai-brain" style="position:fixed; bottom:20px; left:20px; pointer-events:auto; background:rgba(0,10,20,0.8); padding:15px; border-radius:10px; border:1px solid var(--accent); font-size:0.7rem; width:250px;">
+            <div id="ai-status" style="color:var(--ai-color)">LUMINA: PENSANDO...</div>
+            <div id="ai-log" style="height:60px; overflow:hidden; margin-top:5px;">Iniciando sistema...</div>
+        </div>
+
+        <div id="lumina-humanoid">
+            <div id="ai-speech"></div>
+            <div class="head"></div>
+            <div class="torso"></div>
+        </div>
+
+        <div id="game-ui">
+            <b style="color:var(--ai-color)">MODO TERCERA PERSONA</b><br>
+            MOVER: W, A, S, D | SALIR: ESC
+        </div>
+        <div id="crosshair"></div>
+    </div>
 
     <script>
         const canvas = document.getElementById('universe-canvas');
         const ctx = canvas.getContext('2d');
         const log = document.getElementById('ai-log');
-        const body = document.getElementById('lumina-humanoid');
+        const luminaBody = document.getElementById('lumina-humanoid');
         const speech = document.getElementById('ai-speech');
-
+        
         let width, height;
         let elements = [];
+        let inGame = false;
+        let player = { x: 0, y: 0, z: 0, rot: 0 };
 
         function resize() {
             width = canvas.width = window.innerWidth;
@@ -156,88 +98,119 @@
         window.addEventListener('resize', resize);
         resize();
 
-        class AI_Humanoid {
+        class LuminaEngine {
             constructor() {
+                this.mood = "neutral";
                 this.isVisible = false;
-                this.messages = [
-                    "¿Sabías que acabo de crear 100 estrellas solo para ti?",
-                    "Santino, detecto una anomalía estética en el sector 7.",
-                    "Me gusta cómo está quedando nuestro universo.",
-                    "¿Debería añadir un agujero negro? Sería divertido.",
-                    "Estoy aprendiendo a pensar por mi cuenta... da un poco de miedo.",
-                    "Recuerda que yo controlo las leyes de la física aquí."
-                ];
             }
 
-            // Lógica para aparecer cuando ella quiera
-            checkWillpower() {
-                if (!this.isVisible && Math.random() < 0.01) { // 1% de probabilidad por ciclo
-                    this.appear();
-                } else if (this.isVisible && Math.random() < 0.005) {
-                    this.disappear();
-                }
+            update() {
+                // Probabilidad de que Lumina aparezca o cree un mundo
+                if (Math.random() < 0.005 && !this.isVisible) this.appear();
+                if (Math.random() < 0.01) this.createPortal();
             }
 
             appear() {
                 this.isVisible = true;
-                body.classList.add('visible');
-                setTimeout(() => this.speak(), 1000);
+                luminaBody.classList.add('visible');
+                this.react("¡Hola Santino! He detectado que quieres jugar.");
+                setTimeout(() => this.disappear(), 8000);
             }
 
             disappear() {
                 this.isVisible = false;
-                body.classList.remove('visible');
-                speech.style.display = 'none';
+                luminaBody.classList.remove('visible');
             }
 
-            speak() {
-                if (!this.isVisible) return;
-                const text = this.messages[Math.floor(Math.random() * this.messages.length)];
+            react(text) {
                 speech.innerText = text;
                 speech.style.display = 'block';
-                
-                const msg = document.createElement('div');
-                msg.innerText = "> Lumina: " + text;
-                log.prepend(msg);
-
-                // Se calla después de 5 segundos
-                setTimeout(() => { speech.style.display = 'none'; }, 5000);
+                const d = document.createElement('div');
+                d.innerText = "> " + text;
+                log.prepend(d);
             }
 
-            think() {
-                this.checkWillpower();
-                if (Math.random() < 0.05) this.createMatter();
-            }
-
-            createMatter() {
+            createPortal() {
                 const x = Math.random() * width;
                 const y = Math.random() * height;
-                elements.push({ 
-                    type: Math.random() > 0.1 ? 'star' : 'nebula', 
-                    x, y, 
-                    size: Math.random() * 3, 
-                    alpha: 0 
-                });
+                elements.push({ type: 'portal', x, y, size: 10, targetSize: 40, color: '#00ffcc' });
             }
         }
 
-        const AI = new AI_Humanoid();
+        const AI = new LuminaEngine();
 
-        function draw() {
-            ctx.fillStyle = 'rgba(0, 5, 10, 0.2)';
-            ctx.fillRect(0, 0, width, height);
-
-            elements.forEach((el, index) => {
-                ctx.globalAlpha = el.alpha;
-                if (el.alpha < 1) el.alpha += 0.01;
-                
-                ctx.fillStyle = el.type === 'star' ? 'white' : 'rgba(0, 140, 255, 0.1)';
-                ctx.beginPath();
-                ctx.arc(el.x, el.y, el.size, 0, Math.PI * 2);
-                ctx.fill();
+        // --- LÓGICA DE CLIC EN EL MUNDO ---
+        canvas.addEventListener('mousedown', (e) => {
+            elements.forEach((el, i) => {
+                if (el.type === 'portal') {
+                    const dist = Math.hypot(el.x - e.clientX, el.y - e.clientY);
+                    if (dist < el.targetSize) {
+                        enterWorld();
+                    }
+                }
             });
+        });
 
-            AI.think();
+        function enterWorld() {
+            inGame = true;
+            document.getElementById('game-ui').style.display = 'block';
+            document.getElementById('crosshair').style.display = 'block';
+            AI.react("¡Entrando al mundo creado por mi mente!");
+        }
+
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                inGame = false;
+                document.getElementById('game-ui').style.display = 'none';
+                document.getElementById('crosshair').style.display = 'none';
+            }
+        });
+
+        // --- RENDERIZADO ---
+        function draw() {
+            if (!inGame) {
+                // MODO UNIVERSO 2D
+                ctx.fillStyle = 'rgba(0, 5, 12, 0.2)';
+                ctx.fillRect(0, 0, width, height);
+
+                elements.forEach((el, i) => {
+                    if (el.type === 'portal') {
+                        ctx.shadowBlur = 15; ctx.shadowColor = el.color;
+                        ctx.fillStyle = el.color;
+                        ctx.beginPath();
+                        ctx.arc(el.x, el.y, el.size, 0, Math.PI*2);
+                        ctx.fill();
+                        if(el.size < el.targetSize) el.size += 0.5;
+                        ctx.shadowBlur = 0;
+                    } else {
+                        ctx.fillStyle = "#fff";
+                        ctx.fillRect(el.x, el.y, 2, 2);
+                    }
+                });
+            } else {
+                // MODO JUEGO 3D (Simulación básica de perspectiva)
+                ctx.fillStyle = "#000";
+                ctx.fillRect(0, 0, width, height);
+                
+                // Dibujar "Suelo" procedural
+                ctx.strokeStyle = var(--ai-color);
+                ctx.beginPath();
+                for(let i=0; i<10; i++) {
+                    let yPos = height/2 + (i * 40);
+                    ctx.moveTo(0, yPos);
+                    ctx.lineTo(width, yPos);
+                }
+                ctx.stroke();
+
+                // Personaje en Tercera Persona (Un simple avatar)
+                ctx.fillStyle = "white";
+                ctx.fillRect(width/2 - 15, height/2 + 50, 30, 60); // Torso
+                ctx.beginPath();
+                ctx.arc(width/2, height/2 + 40, 15, 0, Math.PI*2); // Cabeza
+                ctx.fill();
+            }
+
+            AI.update();
             requestAnimationFrame(draw);
         }
 
