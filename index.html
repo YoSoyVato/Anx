@@ -3,13 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ANX - Network</title>
+    <title>ANX - Genesis AI</title>
     <style>
         :root {
             --accent: #008cff;
-            --accent-glow: rgba(0, 140, 255, 0.4);
-            --bg: #020202;
-            --glass: rgba(10, 10, 10, 0.8);
+            --bg: #00050a;
         }
 
         body, html {
@@ -17,199 +15,227 @@
             width: 100%; height: 100%;
             background-color: var(--bg);
             color: white;
-            font-family: 'Inter', sans-serif;
+            font-family: 'Courier New', monospace;
             overflow: hidden;
         }
 
-        /* SELECTOR INICIAL */
-        #device-selector {
+        /* LIENZO DEL UNIVERSO */
+        #universe-canvas {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: 1;
+        }
+
+        /* PANEL DE PENSAMIENTOS DE LA IA */
+        #ai-brain {
             position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: var(--bg);
-            z-index: 2000;
-            display: flex; flex-direction: column;
-            align-items: center; justify-content: center;
+            bottom: 20px;
+            left: 20px;
+            width: 300px;
+            height: 200px;
+            background: rgba(0, 10, 20, 0.8);
+            border: 1px solid var(--accent);
+            border-radius: 10px;
+            backdrop-filter: blur(10px);
+            z-index: 100;
+            padding: 15px;
+            font-size: 0.75rem;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 0 20px rgba(0, 140, 255, 0.3);
         }
 
-        #main-app { 
-            display: none; width: 100%; height: 100%; 
-            position: relative; flex-direction: column;
-            align-items: center; justify-content: center;
+        #ai-log {
+            overflow-y: auto;
+            flex-grow: 1;
+            color: #00ffcc;
         }
 
-        /* FONDO */
-        .bg-animate { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle at 50% 50%, #001529 0%, #020202 100%); z-index: -2; }
-        .bg-mesh { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-image: linear-gradient(rgba(0, 140, 255, 0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(0, 140, 255, 0.05) 1px, transparent 1px); background-size: 50px 50px; z-index: -1; mask-image: radial-gradient(ellipse at center, black, transparent 80%); }
-
-        /* HEADER DE USUARIO (SOLO LOGUEADOS) */
-        #user-header {
-            display: none; /* Oculto por defecto */
-            position: fixed; top: 20px; right: 20px; z-index: 1000;
-            display: flex; align-items: center; gap: 10px;
+        .status-bar {
+            border-bottom: 1px solid rgba(0, 140, 255, 0.3);
+            padding-bottom: 5px;
+            margin-bottom: 10px;
+            color: var(--accent);
+            font-weight: bold;
+            text-transform: uppercase;
         }
 
-        #user-bar {
-            background: rgba(0, 140, 255, 0.1); 
-            padding: 10px 20px; border-radius: 50px; 
-            border: 1px solid var(--accent); backdrop-filter: blur(15px);
-            font-size: 0.85rem; box-shadow: 0 0 15px rgba(0, 140, 255, 0.2);
+        /* INTERFAZ SUPERIOR */
+        .header {
+            position: fixed;
+            top: 20px; width: 100%;
+            text-align: center;
+            z-index: 100;
+            pointer-events: none;
         }
 
-        /* BOTÓN CREAR (AL LADO DE COINS) */
-        #btn-create {
-            width: 40px; height: 40px;
-            background: var(--accent); color: white;
-            border: none; border-radius: 50%;
-            font-size: 1.5rem; font-weight: bold;
-            cursor: pointer; transition: 0.3s;
-            display: flex; align-items: center; justify-content: center;
-            box-shadow: 0 0 15px var(--accent-glow);
-        }
-        #btn-create:hover { transform: rotate(90deg) scale(1.1); }
-
-        /* FEED */
-        #feed-container { display: none; width: 100%; height: 100vh; background: black; z-index: 50; }
-        .video-section { height: 100vh; width: 100%; display: flex; align-items: center; justify-content: center; position: relative; }
-
-        .side-actions {
-            display: none; position: absolute; right: 25px; bottom: 50px;
-            flex-direction: column; gap: 18px; z-index: 60;
+        .header h1 {
+            letter-spacing: 10px;
+            font-weight: 200;
+            margin: 0;
+            opacity: 0.7;
         }
 
-        .action-btn {
-            background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.1);
-            width: 50px; height: 50px; border-radius: 50%; color: white;
-            cursor: pointer; display: flex; align-items: center; justify-content: center;
-            backdrop-filter: blur(10px); transition: 0.3s;
+        .btn-restart {
+            position: fixed;
+            top: 20px; right: 20px;
+            padding: 10px 20px;
+            background: transparent;
+            border: 1px solid white;
+            color: white;
+            cursor: pointer;
+            z-index: 1000;
+            transition: 0.3s;
         }
+        .btn-restart:hover { background: white; color: black; }
 
-        /* INTERFAZ GENERAL */
-        .logo { font-size: clamp(4rem, 15vw, 7.5rem); font-weight: 900; letter-spacing: -5px; color: #fff; margin: 0; filter: drop-shadow(0 0 15px var(--accent-glow)); }
-        .logo span { color: var(--accent); }
-        .welcome-text { font-size: 1.1rem; color: #aaa; margin-bottom: 40px; text-transform: uppercase; letter-spacing: 5px; font-weight: 300; }
-        .btn-group { display: flex; gap: 20px; justify-content: center; }
-        .btn { padding: 16px 35px; border-radius: 12px; font-weight: 600; cursor: pointer; transition: 0.3s; text-decoration: none; text-transform: uppercase; border: 1px solid rgba(255,255,255,0.1); }
-        .btn-outline { color: #fff; background: rgba(255,255,255,0.03); }
-        .btn-primary { background: var(--accent); color: white; border: none; }
-        
-        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.92); backdrop-filter: blur(15px); justify-content: center; align-items: center; z-index: 1000; }
-        .modal-box { background: var(--glass); padding: 40px; border-radius: 30px; border: 1px solid rgba(255,255,255,0.1); width: 90%; max-width: 380px; text-align: center; }
-        input { width: 100%; padding: 15px; margin: 12px 0; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: white; outline: none; box-sizing: border-box; }
-
-        .fade-in { animation: fadeIn 1.2s ease-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body>
 
-    <div id="device-selector">
-        <h2 style="letter-spacing: 3px; font-weight: 800; color: white;">IDENTIFICA TU PLATAFORMA</h2>
-        <div class="btn-group">
-            <div class="btn btn-outline" onclick="setMode('mobile')">📱 MÓVIL</div>
-            <div class="btn btn-outline" onclick="setMode('pc')">💻 ORDENADOR</div>
-        </div>
+    <div class="header">
+        <h1>ANX UNIVERSUM</h1>
     </div>
 
-    <div id="main-app">
-        <div class="bg-animate"></div>
-        <div class="bg-mesh"></div>
+    <button class="btn-restart" onclick="resetUniverse()">REINICIAR BIG BANG</button>
 
-        <div id="user-header" style="display: none;">
-            <div id="user-bar">
-                <span id="coin-count" style="color: #ffd700; font-weight: 800;">0 ANX Coins</span>
-            </div>
-            <button id="btn-create" onclick="actionCreate()">+</button>
-        </div>
-
-        <div id="home-content" class="container fade-in">
-            <h1 class="logo">AN<span>X</span></h1>
-            <p class="welcome-text">Bienvenido al anexo</p>
-            <div class="btn-group">
-                <a href="#" class="btn btn-outline" onclick="startExploring(false)">Explorar</a>
-                <a href="#" class="btn btn-primary" onclick="toggleModal(true)">Entrar</a>
-            </div>
-        </div>
-
-        <div id="feed-container">
-            <div class="video-section">
-                <div id="empty-msg" class="fade-in" style="text-align: center;">
-                    <span style="font-size: 4rem; opacity: 0.2;">🎬</span>
-                    <h2 style="font-weight: 300;">Aún no hay ningún video</h2>
-                    <p style="color: var(--accent); font-weight: 700; font-size: 0.7rem; letter-spacing: 2px;">SÉ EL PRIMERO EN CREAR UNO</p>
-                    <button class="btn btn-outline" onclick="window.location.reload()" style="margin-top:20px; font-size:0.7rem;">⬅️ Volver</button>
-                </div>
-                <div id="video-actions" class="side-actions">
-                    <button class="action-btn" onclick="addCoin()">❤️</button>
-                    <button class="action-btn">💬</button>
-                    <button class="action-btn">🔗</button>
-                </div>
-            </div>
-        </div>
+    <div id="ai-brain">
+        <div class="status-bar">Nucleo de IA: Activo</div>
+        <div id="ai-log">Iniciando secuencia de creación...</div>
     </div>
 
-    <div id="modal" class="modal-overlay" onclick="closeOutside(event)">
-        <div class="modal-box">
-            <h2 id="mTitle" style="margin-top:0; font-weight: 800;">ACCESO</h2>
-            <input type="email" id="email" placeholder="Usuario o Email">
-            <input type="password" id="pass" placeholder="Contraseña">
-            <button class="btn btn-primary" style="width:100%;" onclick="authAction()">Conectar</button>
-            <p id="mSwitch" style="font-size:0.75rem; color:#666; margin-top:25px; cursor:pointer;" onclick="switchMode()">
-                ¿Nuevo? <span style="color:var(--accent)">Crea una identidad</span>
-            </p>
-        </div>
-    </div>
+    <canvas id="universe-canvas"></canvas>
 
     <script>
-        let isLoggedIn = false;
-        let coins = 0;
-        let isLogin = true;
-        const modal = document.getElementById('modal');
+        const canvas = document.getElementById('universe-canvas');
+        const ctx = canvas.getContext('2d');
+        const log = document.getElementById('ai-log');
 
-        function setMode(mode) {
-            document.getElementById('device-selector').style.display = 'none';
-            document.getElementById('main-app').style.display = 'flex';
-            document.body.classList.add('mode-' + mode);
+        let width, height;
+        let elements = [];
+
+        function resize() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
         }
 
-        function startExploring(registered) {
-            isLoggedIn = registered;
-            document.getElementById('home-content').style.display = 'none';
-            document.getElementById('feed-container').style.display = 'block';
-            
-            // LÓGICA CRUCIAL:
-            // Solo si viene de authAction (isLoggedIn = true) mostramos el header
-            if(isLoggedIn) {
-                document.getElementById('user-header').style.display = 'flex';
-            } else {
-                document.getElementById('user-header').style.display = 'none';
+        window.addEventListener('resize', resize);
+        resize();
+
+        // Inteligencia de la IA
+        class AI_Architect {
+            constructor() {
+                this.energy = 100;
+                this.thoughts = [
+                    "Analizando el vacío...",
+                    "Detectando fluctuaciones cuánticas.",
+                    "Preparando el tejido del espacio-tiempo."
+                ];
+            }
+
+            think() {
+                const decider = Math.random();
+                
+                if (decider < 0.05) {
+                    this.createStar();
+                } else if (decider < 0.07) {
+                    this.createNebula();
+                } else if (decider < 0.01) {
+                    this.createSupernova();
+                }
+
+                // Mantener el log activo
+                if (Math.random() < 0.02) {
+                    this.updateLog();
+                }
+            }
+
+            updateLog() {
+                const phrases = [
+                    "Expandiendo fronteras del universo.",
+                    "Generando gravedad en sector " + Math.floor(Math.random()*99),
+                    "Estabilizando órbitas planetarias.",
+                    "IA: La entropía está bajo control.",
+                    "Creando materia oscura..."
+                ];
+                const msg = document.createElement('div');
+                msg.innerText = "> " + phrases[Math.floor(Math.random()*phrases.length)];
+                log.prepend(msg);
+                if(log.childNodes.length > 8) log.removeChild(log.lastChild);
+            }
+
+            createStar() {
+                const x = Math.random() * width;
+                const y = Math.random() * height;
+                const size = Math.random() * 2;
+                elements.push({ type: 'star', x, y, size, alpha: 0 });
+            }
+
+            createNebula() {
+                const x = Math.random() * width;
+                const y = Math.random() * height;
+                const size = 50 + Math.random() * 150;
+                const color = `hsla(${Math.random() * 360}, 70%, 50%, 0.05)`;
+                elements.push({ type: 'nebula', x, y, size, color });
+            }
+
+            createSupernova() {
+                const x = Math.random() * width;
+                const y = Math.random() * height;
+                elements.push({ type: 'supernova', x, y, radius: 1, maxRadius: 200 + Math.random()*300, alpha: 1 });
+                const msg = document.createElement('div');
+                msg.style.color = "orange";
+                msg.innerText = "!!! EVENTO: Supernova detectada.";
+                log.prepend(msg);
             }
         }
 
-        function addCoin() {
-            // Solo sumamos si está logueado
-            if(!isLoggedIn) return alert("Debes iniciar sesión para ganar coins");
-            coins += 10;
-            document.getElementById('coin-count').innerText = coins + " ANX Coins";
+        const AI = new AI_Architect();
+
+        function draw() {
+            // Fondo con rastro suave
+            ctx.fillStyle = 'rgba(0, 5, 10, 0.1)';
+            ctx.fillRect(0, 0, width, height);
+
+            elements.forEach((el, index) => {
+                if (el.type === 'star') {
+                    if(el.alpha < 1) el.alpha += 0.01;
+                    ctx.fillStyle = `rgba(255, 255, 255, ${el.alpha})`;
+                    ctx.beginPath();
+                    ctx.arc(el.x, el.y, el.size, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+
+                if (el.type === 'nebula') {
+                    ctx.fillStyle = el.color;
+                    ctx.beginPath();
+                    ctx.arc(el.x, el.y, el.size, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+
+                if (el.type === 'supernova') {
+                    ctx.strokeStyle = `rgba(255, 255, 255, ${el.alpha})`;
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.arc(el.x, el.y, el.radius, 0, Math.PI * 2);
+                    ctx.stroke();
+                    el.radius += 5;
+                    el.alpha -= 0.01;
+                    if(el.alpha <= 0) elements.splice(index, 1);
+                }
+            });
+
+            AI.think();
+            requestAnimationFrame(draw);
         }
 
-        function actionCreate() {
-            alert("Subiendo video a los servidores de ANX...");
-            document.getElementById('empty-msg').style.display = 'none';
-            document.getElementById('video-actions').style.display = 'flex';
+        function resetUniverse() {
+            elements = [];
+            log.innerHTML = "EL BIG BANG HA COMENZADO...";
         }
 
-        function toggleModal(show) { modal.style.display = show ? 'flex' : 'none'; }
-        function closeOutside(e) { if(e.target === modal) toggleModal(false); }
-        function switchMode() {
-            isLogin = !isLogin;
-            document.getElementById('mTitle').innerText = isLogin ? 'ACCESO' : 'REGISTRO';
-        }
-
-        function authAction() {
-            if(!document.getElementById('email').value) return alert("Email requerido");
-            toggleModal(false);
-            startExploring(true); // Entra como usuario registrado
-        }
+        draw();
     </script>
 </body>
 </html>
