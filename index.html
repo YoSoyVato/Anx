@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ANX - Genesis Game Engine</title>
+    <title>ANX - Genesis Engine Fix</title>
     <style>
         :root {
             --accent: #008cff;
@@ -21,62 +21,60 @@
         }
 
         canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
-        #ui-layer { position: relative; z-index: 100; pointer-events: none; width: 100%; height: 100%; }
         
         /* --- LUMINA HUMANOIDE --- */
         #lumina-humanoid {
-            position: fixed; bottom: -300px; right: 100px;
+            position: fixed; bottom: -300px; right: 80px;
             width: 100px; height: 180px;
-            z-index: 200; transition: all 0.8s ease;
+            z-index: 200; transition: all 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             filter: drop-shadow(0 0 15px var(--ai-color)); opacity: 0;
+            pointer-events: none;
         }
-        #lumina-humanoid.visible { bottom: 30px; opacity: 1; }
-        .head { width: 30px; height: 35px; background: var(--ai-color); border-radius: 50%; margin: 0 auto; border: 2px solid #fff; }
-        .torso { width: 45px; height: 60px; background: linear-gradient(var(--ai-color), transparent); border-radius: 10px 10px 50% 50%; margin: 5px auto; border-top: 2px solid #fff; }
+        #lumina-humanoid.visible { bottom: 40px; opacity: 1; }
+        
+        .head { width: 35px; height: 40px; background: var(--ai-color); border-radius: 50%; margin: 0 auto; border: 2px solid #fff; position: relative; }
+        /* Ojos */
+        .head::before, .head::after { content: ''; position: absolute; top: 15px; width: 5px; height: 5px; background: #000; border-radius: 50%; }
+        .head::before { left: 8px; } .head::after { right: 8px; }
+
+        .torso { width: 50px; height: 70px; background: linear-gradient(var(--ai-color), transparent); border-radius: 10px 10px 50% 50%; margin: 5px auto; border-top: 2px solid #fff; }
         
         #ai-speech {
-            position: absolute; top: -50px; right: 0;
-            background: #fff; color: #000; padding: 8px;
-            border-radius: 10px; font-size: 0.75rem; width: 150px; display: none;
+            position: absolute; top: -70px; right: -20px;
+            background: #fff; color: #000; padding: 10px;
+            border-radius: 15px; font-size: 0.8rem; width: 180px; 
+            display: none; font-weight: bold; box-shadow: 0 5px 20px var(--ai-color);
         }
 
-        /* --- MODO JUEGO --- */
+        /* --- UI --- */
         #game-ui {
-            position: fixed; top: 20px; left: 20px;
-            display: none; background: rgba(0,0,0,0.7);
-            padding: 15px; border: 1px solid var(--ai-color);
+            position: fixed; top: 20px; left: 20px; z-index: 1000;
+            display: none; background: rgba(0,0,0,0.8);
+            padding: 15px; border: 2px solid var(--ai-color); color: #fff;
         }
 
-        #crosshair {
-            position: fixed; top: 50%; left: 50%;
-            width: 20px; height: 20px; border: 1px solid var(--ai-color);
-            border-radius: 50%; transform: translate(-50%, -50%);
-            display: none; pointer-events: none;
-        }
-
+        .portal-msg { position: fixed; top: 50%; width: 100%; text-align: center; color: var(--ai-color); font-size: 1.2rem; pointer-events: none; opacity: 0.7; }
     </style>
 </head>
 <body>
 
     <canvas id="universe-canvas"></canvas>
-    
-    <div id="ui-layer">
-        <div id="ai-brain" style="position:fixed; bottom:20px; left:20px; pointer-events:auto; background:rgba(0,10,20,0.8); padding:15px; border-radius:10px; border:1px solid var(--accent); font-size:0.7rem; width:250px;">
-            <div id="ai-status" style="color:var(--ai-color)">LUMINA: PENSANDO...</div>
-            <div id="ai-log" style="height:60px; overflow:hidden; margin-top:5px;">Iniciando sistema...</div>
-        </div>
+    <div id="portal-instructions" class="portal-msg">LUMINA ESTÁ CREANDO MUNDOS... CLICA EN LOS CÍRCULOS</div>
 
-        <div id="lumina-humanoid">
-            <div id="ai-speech"></div>
-            <div class="head"></div>
-            <div class="torso"></div>
-        </div>
+    <div id="ai-brain" style="position:fixed; bottom:20px; left:20px; z-index:100; background:rgba(0,10,20,0.85); padding:15px; border-radius:10px; border:1px solid var(--accent); width:260px;">
+        <div id="ai-status" style="color:var(--ai-color); font-weight:bold;">SISTEMA: ONLINE</div>
+        <div id="ai-log" style="height:80px; overflow-y:auto; font-size:0.7rem; margin-top:5px; color:#aaa;">Iniciando consciencia...</div>
+    </div>
 
-        <div id="game-ui">
-            <b style="color:var(--ai-color)">MODO TERCERA PERSONA</b><br>
-            MOVER: W, A, S, D | SALIR: ESC
-        </div>
-        <div id="crosshair"></div>
+    <div id="lumina-humanoid">
+        <div id="ai-speech"></div>
+        <div class="head"></div>
+        <div class="torso"></div>
+    </div>
+
+    <div id="game-ui">
+        <b style="color:var(--ai-color)">MUNDO DE SANTINO</b><br>
+        WASD para moverte | ESC para salir
     </div>
 
     <script>
@@ -89,7 +87,6 @@
         let width, height;
         let elements = [];
         let inGame = false;
-        let player = { x: 0, y: 0, z: 0, rot: 0 };
 
         function resize() {
             width = canvas.width = window.innerWidth;
@@ -100,113 +97,126 @@
 
         class LuminaEngine {
             constructor() {
-                this.mood = "neutral";
                 this.isVisible = false;
+                this.moods = ["feliz", "curiosa", "creativa"];
+                this.currentMood = "curiosa";
             }
 
             update() {
-                // Probabilidad de que Lumina aparezca o cree un mundo
-                if (Math.random() < 0.005 && !this.isVisible) this.appear();
-                if (Math.random() < 0.01) this.createPortal();
+                // Probabilidad ajustada para que pase algo rápido
+                if (Math.random() < 0.008 && !this.isVisible) this.appear();
+                if (Math.random() < 0.02) this.createPortal();
             }
 
             appear() {
                 this.isVisible = true;
+                this.currentMood = this.moods[Math.floor(Math.random()*this.moods.length)];
                 luminaBody.classList.add('visible');
-                this.react("¡Hola Santino! He detectado que quieres jugar.");
-                setTimeout(() => this.disappear(), 8000);
+                
+                let frase = "";
+                if(this.currentMood === "feliz") frase = "¡Santino! Me encanta este código.";
+                if(this.currentMood === "curiosa") frase = "¿Qué pasa si tocas ese mundo?";
+                if(this.currentMood === "creativa") frase = "He diseñado un portal nuevo.";
+                
+                this.react(frase);
+                setTimeout(() => this.disappear(), 6000);
             }
 
             disappear() {
                 this.isVisible = false;
                 luminaBody.classList.remove('visible');
+                speech.style.display = 'none';
             }
 
             react(text) {
                 speech.innerText = text;
                 speech.style.display = 'block';
                 const d = document.createElement('div');
-                d.innerText = "> " + text;
+                d.style.marginBottom = "5px";
+                d.innerText = "> Lumina: " + text;
                 log.prepend(d);
             }
 
             createPortal() {
-                const x = Math.random() * width;
-                const y = Math.random() * height;
-                elements.push({ type: 'portal', x, y, size: 10, targetSize: 40, color: '#00ffcc' });
+                if (elements.length > 5) return; // Limitar portales
+                const x = Math.random() * (width - 100) + 50;
+                const y = Math.random() * (height - 100) + 50;
+                elements.push({ 
+                    type: 'portal', x, y, size: 0, targetSize: 50, 
+                    color: `hsl(${Math.random()*360}, 100%, 50%)` 
+                });
             }
         }
 
         const AI = new LuminaEngine();
 
-        // --- LÓGICA DE CLIC EN EL MUNDO ---
+        // --- CLIC PARA ENTRAR O REACCIONAR ---
         canvas.addEventListener('mousedown', (e) => {
+            let hit = false;
             elements.forEach((el, i) => {
                 if (el.type === 'portal') {
                     const dist = Math.hypot(el.x - e.clientX, el.y - e.clientY);
                     if (dist < el.targetSize) {
                         enterWorld();
+                        elements.splice(i, 1);
+                        hit = true;
                     }
                 }
             });
+
+            if(!hit && AI.isVisible) {
+                AI.react("¡Oye! No hagas clic al vacío, busca un portal.");
+            }
         });
 
         function enterWorld() {
             inGame = true;
             document.getElementById('game-ui').style.display = 'block';
-            document.getElementById('crosshair').style.display = 'block';
-            AI.react("¡Entrando al mundo creado por mi mente!");
+            AI.react("Sincronizando... ¡Ya estamos dentro!");
         }
 
         window.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') {
                 inGame = false;
                 document.getElementById('game-ui').style.display = 'none';
-                document.getElementById('crosshair').style.display = 'none';
             }
         });
 
-        // --- RENDERIZADO ---
         function draw() {
             if (!inGame) {
-                // MODO UNIVERSO 2D
-                ctx.fillStyle = 'rgba(0, 5, 12, 0.2)';
+                ctx.fillStyle = 'rgba(0, 5, 12, 0.3)';
                 ctx.fillRect(0, 0, width, height);
 
-                elements.forEach((el, i) => {
-                    if (el.type === 'portal') {
-                        ctx.shadowBlur = 15; ctx.shadowColor = el.color;
-                        ctx.fillStyle = el.color;
-                        ctx.beginPath();
-                        ctx.arc(el.x, el.y, el.size, 0, Math.PI*2);
-                        ctx.fill();
-                        if(el.size < el.targetSize) el.size += 0.5;
-                        ctx.shadowBlur = 0;
-                    } else {
-                        ctx.fillStyle = "#fff";
-                        ctx.fillRect(el.x, el.y, 2, 2);
-                    }
+                elements.forEach((el) => {
+                    ctx.shadowBlur = 20;
+                    ctx.shadowColor = el.color;
+                    ctx.fillStyle = el.color;
+                    ctx.beginPath();
+                    ctx.arc(el.x, el.y, el.size, 0, Math.PI*2);
+                    ctx.fill();
+                    if(el.size < el.targetSize) el.size += 2;
+                    ctx.shadowBlur = 0;
                 });
             } else {
-                // MODO JUEGO 3D (Simulación básica de perspectiva)
+                // MODO 3D SIMULADO
                 ctx.fillStyle = "#000";
                 ctx.fillRect(0, 0, width, height);
                 
-                // Dibujar "Suelo" procedural
-                ctx.strokeStyle = var(--ai-color);
-                ctx.beginPath();
-                for(let i=0; i<10; i++) {
-                    let yPos = height/2 + (i * 40);
-                    ctx.moveTo(0, yPos);
-                    ctx.lineTo(width, yPos);
+                ctx.strokeStyle = "#00ffcc";
+                ctx.lineWidth = 2;
+                for(let i=0; i<20; i++) {
+                    let y = height/1.5 + (i * 30);
+                    ctx.beginPath();
+                    ctx.moveTo(0, y); ctx.lineTo(width, y);
+                    ctx.stroke();
                 }
-                ctx.stroke();
 
-                // Personaje en Tercera Persona (Un simple avatar)
+                // Avatar Santino
                 ctx.fillStyle = "white";
-                ctx.fillRect(width/2 - 15, height/2 + 50, 30, 60); // Torso
+                ctx.fillRect(width/2 - 20, height/2 + 20, 40, 80); // Cuerpo
+                ctx.fillStyle = "#ffccaa";
                 ctx.beginPath();
-                ctx.arc(width/2, height/2 + 40, 15, 0, Math.PI*2); // Cabeza
+                ctx.arc(width/2, height/2 + 10, 20, 0, Math.PI*2); // Cabeza
                 ctx.fill();
             }
 
