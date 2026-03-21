@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ANX - Genesis Engine V11 (ULTRA PULISHED)</title>
+    <title>ANX - Genesis Engine V11.5 (WEATHER UPDATE)</title>
     <style>
         :root { --accent: #008cff; --bg: #000103; --ai-color: #00ffcc; }
         body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: var(--bg); color: white; font-family: 'Courier New', monospace; overflow: hidden; }
@@ -16,10 +16,11 @@
         .hud-stats { position: absolute; top: 20px; left: 20px; font-size: 0.8rem; color: var(--ai-color); }
         #world-title { position: absolute; top: 20px; width: 100%; text-align: center; font-size: 1.5rem; letter-spacing: 5px; text-transform: uppercase; font-weight: 900; text-shadow: 0 0 15px var(--accent); }
         
-        /* Efecto de Scanlines */
         body::after { content: " "; display: block; position: absolute; top: 0; left: 0; bottom: 0; right: 0; background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06)); z-index: 1000; background-size: 100% 4px, 3px 100%; pointer-events: none; }
-        
         #crosshair { position: absolute; top: 50%; left: 50%; width: 20px; height: 20px; border: 1px solid rgba(0,255,204,0.5); transform: translate(-50%, -50%); border-radius: 50%; }
+        
+        /* Indicador de Clima */
+        #weather-status { position: absolute; top: 50px; left: 20px; font-size: 0.7rem; color: #fff; text-transform: uppercase; opacity: 0.7; }
     </style>
 </head>
 <body>
@@ -27,6 +28,7 @@
     <div id="ui-layer">
         <div id="world-title">INICIALIZANDO...</div>
         <div class="hud-stats" id="debug">COORD: X:0 Z:0 | FPS: 60</div>
+        <div id="weather-status">CLIMA: DESPEJADO</div>
         <div id="crosshair"></div>
         
         <div id="ai-brain">
@@ -45,6 +47,7 @@
         const ctx = canvas.getContext('2d');
         const log = document.getElementById('ai-log');
         const worldTitle = document.getElementById('world-title');
+        const weatherUI = document.getElementById('weather-status');
         
         let width, height, frames = 0;
         let player = { x: 0, z: 0, yaw: 0, targetYaw: 0, vel: 0, isMoving: false };
@@ -55,11 +58,11 @@
             time: 0, 
             theme: {}, 
             biome: 'forest',
-            gravity: 0.5 
+            weather: 'clear', // 'clear' o 'rain'
+            weatherTimer: 500
         };
         const keys = {};
 
-        // --- UTILIDADES ---
         function addLog(msg) {
             const entry = document.createElement('div');
             entry.innerHTML = `<span style="color:white">[${new Date().toLocaleTimeString()}]</span> ${msg}`;
@@ -79,21 +82,22 @@
         });
         window.addEventListener('keyup', e => keys[e.code] = false);
 
-        // --- SISTEMA DE PARTÍCULAS ---
         class Particle {
             constructor(x, y, z, color) {
                 this.x = x; this.y = y; this.z = z;
                 this.color = color;
-                this.velY = Math.random() * 2 + 1;
-                this.life = 1;
+                this.velY = Math.random() * 15 + 10; // Más rápido para lluvia
+                this.len = Math.random() * 20 + 10;
             }
             update() {
                 this.y += this.velY;
-                if(this.y > 500) this.y = -500;
+                if(this.y > height) {
+                    this.y = -20;
+                    this.x = Math.random() * width;
+                }
             }
         }
 
-        // --- CLASES DEL MUNDO ---
         class GrassBlade {
             constructor(x, z) {
                 this.x = x; this.z = z;
@@ -125,7 +129,6 @@
                 ctx.fillStyle = grad;
                 ctx.globalAlpha = 0.3 * bright;
                 ctx.fillRect(x2d - (this.size*scale)/2, y2d + pulse, this.size*scale, 300*scale);
-                // Reflejos superficiales
                 ctx.strokeStyle = "white";
                 ctx.globalAlpha = 0.1 * bright;
                 ctx.strokeRect(x2d - (this.size*scale)/2, y2d + pulse, this.size*scale, 2);
@@ -137,20 +140,15 @@
                 this.x = x; this.z = z;
                 this.h = 400 + Math.random() * 2000;
                 this.w = 80 + Math.random() * 150;
-                this.rot = Math.random() * Math.PI;
             }
             draw(scale, x2d, y2d, bright) {
                 ctx.lineWidth = 3 * scale;
                 ctx.strokeStyle = world.theme.accent;
                 ctx.fillStyle = "black";
                 ctx.globalAlpha = bright;
-                
-                // Cuerpo principal
                 ctx.strokeRect(x2d - (this.w*scale)/2, y2d - this.h*scale, this.w*scale, this.h*scale);
                 ctx.globalAlpha = 0.2 * bright;
                 ctx.fillRect(x2d - (this.w*scale)/2, y2d - this.h*scale, this.w*scale, this.h*scale);
-                
-                // Detalles tecnológicos (luces)
                 if(frames % 60 < 30) {
                     ctx.fillStyle = world.theme.accent;
                     ctx.globalAlpha = 0.8 * bright;
@@ -162,19 +160,16 @@
         class Lifeform {
             constructor(x, z) {
                 this.x = x; this.z = z;
-                this.tx = x; this.tz = z;
-                this.angle = 0;
                 this.state = 'idle';
                 this.timer = 0;
             }
             update() {
                 let distToPlayer = Math.hypot(this.x - player.x, this.z - player.z);
-                
                 if(distToPlayer < 600) {
                     this.state = 'scared';
-                    this.angle = Math.atan2(this.x - player.x, this.z - player.z);
-                    this.x += Math.sin(this.angle) * 8;
-                    this.z += Math.cos(this.angle) * 8;
+                    let angle = Math.atan2(this.x - player.x, this.z - player.z);
+                    this.x += Math.sin(angle) * 8;
+                    this.z += Math.cos(angle) * 8;
                 } else {
                     if(this.timer-- <= 0) {
                         this.state = 'moving';
@@ -195,17 +190,16 @@
                 ctx.beginPath();
                 ctx.arc(x2d, y2d - s - jump*scale, s/2, 0, Math.PI*2);
                 ctx.fill();
-                // Sombra
-                ctx.fillStyle = "black"; ctx.globalAlpha = 0.3 * bright;
-                ctx.beginPath(); ctx.ellipse(x2d, y2d, s/2 * scale, s/4 * scale, 0, 0, Math.PI*2); ctx.fill();
             }
         }
 
-        // --- GENERADOR DE MUNDOS ---
         function generateNewWorld() {
             frames = 0;
             world.entities = [];
             world.particles = [];
+            world.weather = 'clear';
+            world.weatherTimer = 500 + Math.random() * 1000;
+            
             const biomes = ['NEON_FOREST', 'DATA_OCEAN', 'VOID_STRUCTURES', 'CRYSTAL_VALLEY'];
             world.biome = biomes[Math.floor(Math.random() * biomes.length)];
             
@@ -214,64 +208,56 @@
                 hue: hue,
                 accent: `hsl(${hue}, 100%, 60%)`,
                 sky: `hsl(${hue}, 40%, 5%)`,
-                particleColor: `hsl(${hue}, 80%, 80%)`
+                particleColor: `hsl(${hue}, 80%, 90%)`
             };
 
             worldTitle.innerText = world.biome.replace('_', ' ');
             worldTitle.style.color = world.theme.accent;
-            addLog("REINICIANDO SIMULACIÓN...");
-            addLog("BIOMA DETECTADO: " + world.biome);
+            addLog("SIMULACIÓN INICIADA: " + world.biome);
 
-            // Generar según bioma
             for(let i=0; i<400; i++) {
                 let rx = (Math.random()-0.5) * 15000;
                 let rz = (Math.random()-0.5) * 15000;
-
                 if(world.biome === 'NEON_FOREST') {
                     if(i < 300) world.entities.push(new GrassBlade(rx, rz));
                     if(i < 20) world.entities.push(new Monolith(rx, rz));
                 } else if(world.biome === 'DATA_OCEAN') {
                     if(i < 60) world.entities.push(new WaterTile(rx, rz));
-                    if(i < 10) world.entities.push(new Monolith(rx, rz));
                 } else {
                     if(i < 80) world.entities.push(new Monolith(rx, rz));
                 }
-
                 if(i < 15) world.entities.push(new Lifeform(rx, rz));
             }
 
-            // Partículas atmosféricas
-            for(let i=0; i<100; i++) {
-                world.particles.push(new Particle(
-                    Math.random() * width, 
-                    Math.random() * height, 
-                    Math.random() * 1000, 
-                    world.theme.particleColor
-                ));
+            // Pool de partículas para la lluvia
+            for(let i=0; i<150; i++) {
+                world.particles.push(new Particle(Math.random() * width, Math.random() * height, 0, world.theme.particleColor));
             }
         }
 
-        // --- BUCLE PRINCIPAL ---
         function loop() {
-            // Tiempo y luz
+            // Ciclo Día/Noche (4000 frames)
             world.time = (frames % 4000) / 4000;
             let dayLevel = Math.max(0.05, Math.sin(world.time * Math.PI));
-            
+            let isNight = dayLevel < 0.25;
+
+            // Sistema de Clima Dinámico
+            world.weatherTimer--;
+            if(world.weatherTimer <= 0) {
+                world.weather = world.weather === 'clear' ? 'rain' : 'clear';
+                world.weatherTimer = 800 + Math.random() * 1500;
+                addLog(world.weather === 'rain' ? "PREDICCIÓN: PRECIPITACIÓN DE DATOS" : "PREDICCIÓN: CIELO DESPEJADO");
+            }
+            weatherUI.innerText = `CLIMA: ${world.weather === 'rain' ? 'LLUVIA DE NEÓN' : 'DESPEJADO'} | ${isNight ? 'NOCHE' : 'DÍA'}`;
+            weatherUI.style.color = isNight ? '#7af' : world.theme.accent;
+
             // Render Fondo
+            let ambientBright = world.weather === 'rain' ? dayLevel * 0.5 : dayLevel;
             let bgGrad = ctx.createRadialGradient(width/2, height/2, 10, width/2, height/2, width);
-            bgGrad.addColorStop(0, `hsl(${world.theme.hue}, 40%, ${10 * dayLevel}%)`);
+            bgGrad.addColorStop(0, `hsl(${world.theme.hue}, 40%, ${15 * ambientBright}%)`);
             bgGrad.addColorStop(1, "#000");
             ctx.fillStyle = bgGrad;
             ctx.fillRect(0,0,width,height);
-
-            // Estrellas/Datos de fondo
-            ctx.fillStyle = "white";
-            for(let i=0; i<50; i++) {
-                let sX = (Math.sin(i + frames*0.001) * width);
-                let sY = (Math.cos(i * 2) * height);
-                ctx.globalAlpha = 0.2 * dayLevel;
-                ctx.fillRect(sX % width, sY % height, 2, 2);
-            }
 
             // Controles
             if(keys['KeyW']) player.vel += 2;
@@ -279,19 +265,16 @@
             if(keys['KeyA']) player.targetYaw -= 0.05;
             if(keys['KeyD']) player.targetYaw += 0.05;
             
-            player.vel *= 0.9; // Fricción
+            player.vel *= 0.9;
             player.yaw += (player.targetYaw - player.yaw) * 0.1;
             player.x += Math.sin(player.yaw) * player.vel;
             player.z += Math.cos(player.yaw) * player.vel;
-            player.isMoving = Math.abs(player.vel) > 1;
 
-            // Debug info
             document.getElementById('debug').innerText = `X: ${Math.floor(player.x)} Z: ${Math.floor(player.z)} | BIOME: ${world.biome}`;
 
             // Renderizar Objetos
             let renderList = world.entities.map(e => {
                 let dx = e.x - player.x, dz = e.z - player.z;
-                // Rotación de cámara
                 let rx = dx * Math.cos(-player.yaw) - dz * Math.sin(-player.yaw);
                 let rz = dx * Math.sin(-player.yaw) + dz * Math.cos(-player.yaw);
                 return { e, rx, rz };
@@ -303,36 +286,51 @@
                 let scale = 1000 / item.rz;
                 let x2d = item.rx * scale + width/2;
                 let y2d = height/2 + 200 * scale;
-                
                 if(item.e.update) item.e.update();
-                item.e.draw(scale, x2d, y2d, dayLevel + 0.2);
+                item.e.draw(scale, x2d, y2d, ambientBright + 0.2);
             });
 
-            // Partículas
-            world.particles.forEach(p => {
-                p.update();
-                ctx.fillStyle = p.color;
-                ctx.globalAlpha = 0.5;
-                ctx.fillRect(p.x, p.y, 1, 4);
-            });
+            // Render Lluvia si aplica
+            if(world.weather === 'rain') {
+                ctx.strokeStyle = world.theme.particleColor;
+                ctx.lineWidth = 1;
+                world.particles.forEach(p => {
+                    p.update();
+                    ctx.globalAlpha = 0.4;
+                    ctx.beginPath();
+                    ctx.moveTo(p.x, p.y);
+                    ctx.lineTo(p.x, p.y + p.len);
+                    ctx.stroke();
+                });
+            }
 
-            // HUD BRAZOS / ARMA
+            // --- MEJORA DE BRAZOS (Perspectiva y Ángulo) ---
             ctx.globalAlpha = 1;
-            let swayX = Math.sin(frames * 0.1) * 10;
-            let swayY = Math.abs(Math.cos(frames * 0.1)) * 15;
+            let walkBob = Math.sin(frames * 0.15) * (player.vel * 0.5);
+            let armY = height - 120 + walkBob;
             
-            // Brazo Izquierdo
-            ctx.fillStyle = "#050505";
+            ctx.fillStyle = "#030303";
             ctx.strokeStyle = world.theme.accent;
-            ctx.lineWidth = 5;
-            ctx.beginPath();
-            ctx.rect(-50 + swayX, height - 150 + swayY, 120, 300);
-            ctx.fill(); ctx.stroke();
-            
-            // Brazo Derecho (Controlador)
-            ctx.beginPath();
-            ctx.rect(width - 70 + swayX, height - 150 + swayY, 120, 300);
-            ctx.fill(); ctx.stroke();
+            ctx.lineWidth = 4;
+
+            // Brazo Izquierdo (Más centrado y angulado)
+            ctx.save();
+            ctx.translate(width * 0.25, armY);
+            ctx.rotate(-0.2); // Inclinado hacia el centro
+            ctx.fillRect(0, 0, 100, 400);
+            ctx.strokeRect(0, 0, 100, 400);
+            ctx.restore();
+
+            // Brazo Derecho / Herramienta
+            ctx.save();
+            ctx.translate(width * 0.75 - 100, armY + 20);
+            ctx.rotate(0.2); // Inclinado hacia el centro
+            ctx.fillRect(0, 0, 100, 400);
+            ctx.strokeRect(0, 0, 100, 400);
+            // Detalle de "arma" o herramienta
+            ctx.fillStyle = world.theme.accent;
+            ctx.fillRect(20, -10, 30, 60);
+            ctx.restore();
 
             frames++;
             requestAnimationFrame(loop);
@@ -342,18 +340,10 @@
         generateNewWorld();
         loop();
 
-        // Logs automáticos de la IA
         setInterval(() => {
-            const msgs = [
-                "Analizando topografía...",
-                "Detectada forma de vida orgánica.",
-                "Advertencia: Inestabilidad en el núcleo.",
-                "Sincronizando reloj biológico.",
-                "Nivel de renderizado optimizado.",
-                "Escaneando horizonte..."
-            ];
-            if(Math.random() > 0.7) addLog(msgs[Math.floor(Math.random()*msgs.length)]);
-        }, 3000);
+            const msgs = ["Sincronizando clima...", "Escaneando bionodos...", "Ciclo solar actualizado.", "Estabilizando visión..."];
+            if(Math.random() > 0.8) addLog(msgs[Math.floor(Math.random()*msgs.length)]);
+        }, 4000);
 
     </script>
 </body>
