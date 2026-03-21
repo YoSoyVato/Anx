@@ -3,63 +3,68 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ANX - Genesis Engine V6.5 (MAX EXPANSION)</title>
+    <title>ANX - Genesis Engine V6.5 (ULTRA EDITION)</title>
     <style>
         :root { --accent: #008cff; --bg: #000205; --ai-color: #00ffcc; --blood: #ff0033; }
         body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: var(--bg); color: white; font-family: 'Courier New', monospace; overflow: hidden; }
         canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; image-rendering: pixelated; }
         
-        #ai-brain { position: fixed; bottom: 20px; left: 20px; z-index: 1000; background: rgba(0,5,15,0.9); padding: 15px; border-radius: 8px; border: 1px solid var(--accent); width: 280px; pointer-events: none; box-shadow: 0 0 20px rgba(0,140,255,0.3); }
-        #ai-log { height: 120px; overflow-y: auto; font-size: 0.75rem; margin-top: 5px; color: #7af; scrollbar-width: none; }
-        .glitch { animation: glitch 1s infinite; }
-        @keyframes glitch { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.8; transform: scale(1.01); } }
+        /* UI Santino Original Recuperada */
+        #ai-brain { position: fixed; bottom: 20px; left: 20px; z-index: 1000; background: rgba(0,5,15,0.95); padding: 15px; border-radius: 8px; border: 1px solid var(--accent); width: 280px; pointer-events: none; box-shadow: 0 0 25px rgba(0,140,255,0.4); }
+        #ai-log { height: 110px; overflow-y: auto; font-size: 0.7rem; margin-top: 5px; color: #7af; scrollbar-width: none; line-height: 1.2; }
+        .glitch { animation: glitch 1.2s infinite; }
+        @keyframes glitch { 0% { opacity: 1; transform: skew(0deg); } 20% { opacity: 0.8; transform: skew(2deg); } 40% { opacity: 1; } 100% { opacity: 1; } }
 
-        #game-hud { position: fixed; top: 20px; left: 20px; display: none; background: rgba(0,0,0,0.85); padding: 25px; border-left: 5px solid var(--ai-color); z-index: 1000; backdrop-filter: blur(8px); border-radius: 0 15px 15px 0; }
-        #crosshair { position: fixed; top: 50%; left: 50%; width: 24px; height: 24px; transform: translate(-50%, -50%); display: none; z-index: 999; pointer-events: none; }
-        #crosshair::before, #crosshair::after { content: ''; position: absolute; background: var(--ai-color); box-shadow: 0 0 5px var(--ai-color); }
+        #game-hud { position: fixed; top: 20px; left: 20px; display: none; background: rgba(0,0,0,0.9); padding: 25px; border-left: 6px solid var(--ai-color); z-index: 1000; backdrop-filter: blur(10px); border-radius: 0 15px 15px 0; border-top: 1px solid #333; }
+        #crosshair { position: fixed; top: 50%; left: 50%; width: 26px; height: 26px; transform: translate(-50%, -50%); display: none; z-index: 999; pointer-events: none; }
+        #crosshair::before, #crosshair::after { content: ''; position: absolute; background: var(--ai-color); box-shadow: 0 0 8px var(--ai-color); }
         #crosshair::before { top: 50%; left: 0; width: 100%; height: 2px; }
         #crosshair::after { left: 50%; top: 0; width: 2px; height: 100%; }
 
-        #lumina-container { position: fixed; bottom: -350px; right: 50px; width: 140px; height: 220px; z-index: 1000; transition: 1s cubic-bezier(0.19, 1, 0.22, 1); filter: drop-shadow(0 0 25px var(--ai-color)); }
+        #lumina-container { position: fixed; bottom: -350px; right: 50px; width: 140px; height: 220px; z-index: 1000; transition: 1.2s cubic-bezier(0.23, 1, 0.32, 1); filter: drop-shadow(0 0 30px var(--ai-color)); }
         #lumina-container.visible { bottom: 40px; }
-        .ai-core { width: 50px; height: 50px; background: #fff; border-radius: 50%; margin: 0 auto; position: relative; box-shadow: 0 0 40px var(--ai-color); border: 2px solid white; }
-        .ai-ring { position: absolute; top: -15px; left: -15px; width: 76px; height: 76px; border: 3px solid var(--ai-color); border-radius: 50%; animation: spin 4s linear infinite; border-top-color: transparent; }
+        .ai-core { width: 50px; height: 50px; background: #fff; border-radius: 50%; margin: 0 auto; box-shadow: 0 0 45px var(--ai-color); border: 2px solid white; position: relative; }
+        .ai-ring { position: absolute; top: -15px; left: -15px; width: 76px; height: 76px; border: 3px solid var(--ai-color); border-radius: 50%; animation: spin 4s linear infinite; border-right-color: transparent; }
         @keyframes spin { 100% { transform: rotate(360deg); } }
 
-        #inventory-bar { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); display: flex; gap: 10px; z-index: 1000; }
-        .slot { width: 45px; height: 45px; background: rgba(0,0,0,0.7); border: 1px solid #444; border-radius: 5px; display: flex; align-items: center; justify-content: center; font-size: 0.6rem; }
-        .slot.active { border-color: var(--ai-color); box-shadow: 0 0 10px var(--ai-color); }
+        #inventory-bar { position: fixed; bottom: 25px; left: 50%; transform: translateX(-50%); display: flex; gap: 12px; z-index: 1000; }
+        .slot { width: 50px; height: 50px; background: rgba(0,10,20,0.8); border: 2px solid #333; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 0.6rem; color: #666; transition: 0.3s; }
+        .slot.active { border-color: var(--ai-color); box-shadow: 0 0 15px var(--ai-color); color: white; transform: translateY(-5px); }
+
+        /* Efecto de Scanlines */
+        .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 2000; background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.02), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.02)); background-size: 100% 3px, 3px 100%; }
     </style>
 </head>
 <body>
 
+    <div class="overlay"></div>
     <canvas id="universe-canvas"></canvas>
     
     <div id="ai-brain">
-        <div id="ai-status" class="glitch" style="color:var(--ai-color); font-weight:bold; font-size: 0.9rem;">GENESIS V6.5_OVERLOAD</div>
-        <div id="ai-log">Inyectando librerías de expansión...</div>
+        <div id="ai-status" class="glitch" style="color:var(--ai-color); font-weight:bold;">GENESIS ENGINE V6.5_STABLE</div>
+        <div id="ai-log">Iniciando protocolos de Santino Ruiz...</div>
     </div>
 
     <div id="game-hud">
-        <b id="world-name" style="color:var(--ai-color); font-size: 1.4rem;">SCANNING...</b><br>
-        <div id="status-bars" style="margin-top: 10px;">
-            <div style="width: 150px; height: 8px; background: #222; border: 1px solid #444;">
-                <div id="hp-fill" style="width: 100%; height: 100%; background: var(--ai-color); transition: 0.3s;"></div>
+        <b id="world-name" style="color:var(--ai-color); font-size: 1.3rem;">DATA_LINK: OK</b><br>
+        <div style="margin-top: 10px;">
+            <div style="width: 180px; height: 10px; background: #111; border: 1px solid #444; position: relative;">
+                <div id="hp-bar" style="width: 100%; height: 100%; background: var(--ai-color); box-shadow: 0 0 10px var(--ai-color); transition: 0.5s;"></div>
             </div>
-            <span id="biome-label" style="font-size:0.65rem; color: #888; text-transform: uppercase; margin-top: 5px; display: block;">BIOMA: DATA_MISSING</span>
+            <span id="biome-label" style="font-size:0.6rem; color: #888; display: block; margin-top: 5px; letter-spacing: 2px;">STATUS: OPERATIONAL</span>
         </div>
     </div>
-    
+
     <div id="inventory-bar">
-        <div class="slot active" id="slot-1">FISTS</div>
-        <div class="slot" id="slot-2">SCANNER</div>
-        <div class="slot" id="slot-3">DATA_BLADE</div>
+        <div class="slot active">FIST</div>
+        <div class="slot">SCAN</div>
+        <div class="slot">BLADE</div>
     </div>
 
     <div id="crosshair"></div>
 
     <div id="lumina-container">
-        <div style="position: absolute; top: -80px; right: -20px; background: rgba(255,255,255,0.95); color: #000; padding: 12px; border-radius: 15px; font-size: 0.75rem; width: 220px; font-weight: bold; line-height: 1.4; border-bottom: 4px solid var(--ai-color);" id="ai-msg"></div>
+        <div style="position: absolute; top: -90px; right: -30px; background: white; color: black; padding: 15px; border-radius: 12px; font-size: 0.8rem; width: 220px; font-weight: bold; border-left: 5px solid var(--ai-color);" id="ai-msg"></div>
         <div class="ai-core"></div>
         <div class="ai-ring"></div>
     </div>
@@ -69,37 +74,29 @@
         const ctx = canvas.getContext('2d');
         const log = document.getElementById('ai-log');
         
-        let width, height;
-        let inGame = false;
-        let frames = 0;
-        let selectedSlot = 1;
+        let width, height, inGame = false, frames = 0;
+        let selectedSlot = 0;
 
-        // --- SISTEMA DE JUGADOR COMPLETO ---
         let player = {
-            x: 0, z: 0, yaw: 0, pitch: 0,
+            x: 0, z: 0, yaw: 0,
             vX: 0, vZ: 0,
-            bob: 0, bobSpeed: 0,
-            health: 100, maxHealth: 100,
-            stamina: 100,
-            weaponAnim: 0,
-            isAttacking: false
+            bob: 0, health: 100,
+            isAttacking: false, atkFrame: 0
         };
 
         let currentWorld = {
-            objects: [],
+            entities: [],
             weather: [],
-            biome: 'neutral',
-            colors: { fog: '#000', ground: '#050505', accent: '#00ffcc' },
-            seed: Math.random() * 9999
+            colors: { bg: '#000', accent: '#00ffcc', fog: '#000' }
         };
 
         const keys = {};
 
-        function addLog(t) {
-            const d = document.createElement('div');
-            d.innerHTML = `<span style="color:var(--ai-color)">>></span> ${t}`;
-            log.prepend(d);
-            if(log.childNodes.length > 25) log.lastChild.remove();
+        function addLog(msg) {
+            const div = document.createElement('div');
+            div.innerHTML = `<span style="color:var(--ai-color)">[SYSTEM]</span> ${msg}`;
+            log.prepend(div);
+            if(log.childNodes.length > 15) log.lastChild.remove();
         }
 
         function resize() {
@@ -109,281 +106,276 @@
         window.addEventListener('resize', resize);
         window.addEventListener('keydown', e => {
             keys[e.code] = true;
-            if(e.key >= 1 && e.key <= 3) selectSlot(parseInt(e.key));
+            if(e.key >= 1 && e.key <= 3) {
+                selectedSlot = parseInt(e.key) - 1;
+                updateSlots();
+            }
         });
         window.addEventListener('keyup', e => keys[e.code] = false);
-        window.addEventListener('mousedown', () => { if(inGame) player.isAttacking = true; });
+        window.addEventListener('mousedown', () => { if(inGame) { player.isAttacking = true; player.atkFrame = 0; }});
         resize();
 
-        function selectSlot(n) {
-            selectedSlot = n;
-            document.querySelectorAll('.slot').forEach((s, i) => {
-                s.classList.toggle('active', i === n-1);
-            });
-            addLog("Equipado: " + document.getElementById(`slot-${n}`).innerText);
+        function updateSlots() {
+            const slots = document.querySelectorAll('.slot');
+            slots.forEach((s, i) => s.className = i === selectedSlot ? 'slot active' : 'slot');
+            addLog("Equipando módulo: " + slots[selectedSlot].innerText);
         }
 
-        // --- CLASE DE ENTIDADES MEJORADA ---
+        // --- SISTEMA DE ENTIDADES PROCEDURALES ---
         class Entity {
-            constructor(x, z, type, meta = {}) {
+            constructor(x, z, type) {
                 this.x = x; this.z = z; this.type = type;
-                this.meta = meta;
-                this.id = Math.random();
-                this.life = 100;
-                this.state = 'idle';
-                this.timer = Math.random() * 100;
+                this.seed = Math.random() * 1000;
+                this.timer = Math.random() * 10;
+                
+                // Variaciones únicas para animales
+                this.config = {
+                    bodyW: 30 + Math.random() * 40,
+                    bodyH: 20 + Math.random() * 30,
+                    eyeCount: Math.floor(Math.random() * 4) + 1,
+                    legSpeed: 5 + Math.random() * 10,
+                    hue: Math.random() * 360
+                };
             }
 
             update() {
-                this.timer += 0.02;
+                this.timer += 0.03;
                 if(this.type === 'creature') {
-                    // IA de merodeo
-                    this.x += Math.sin(this.timer) * 1.5;
-                    this.z += Math.cos(this.timer * 0.8) * 1.5;
-                    
-                    // Reacción al jugador
-                    let dist = Math.hypot(this.x - player.x, this.z - player.z);
-                    if(dist < 300) {
-                        this.state = 'alert';
-                        this.x += (this.x - player.x) * 0.02; // Huye del jugador
-                        this.z += (this.z - player.z) * 0.02;
-                    } else { this.state = 'idle'; }
+                    this.x += Math.sin(this.timer * 0.5) * 2;
+                    this.z += Math.cos(this.timer * 0.3) * 2;
                 }
             }
 
             draw(scale, x2d, y2d) {
-                let s = (this.meta.size || 40) * scale;
-                let hover = Math.sin(this.timer * 4) * 15 * scale;
+                let s = scale;
+                let bounce = Math.abs(Math.sin(this.timer * 2)) * 15 * s;
 
                 if(this.type === 'creature') {
-                    ctx.fillStyle = this.state === 'alert' ? '#ff4400' : '#ffffff';
-                    // Cuerpo Segmentado
-                    ctx.fillRect(x2d - s/2, y2d - s - hover, s, s*0.7);
-                    // Piernas procedurales (4 patas)
+                    ctx.save();
+                    ctx.fillStyle = this.type === 'creature' ? `hsl(${this.config.hue}, 70%, 50%)` : '#fff';
+                    if(currentWorld.accent === '#ff0033') ctx.fillStyle = '#ff0033'; // Rojo en modo tétrico
+
+                    // Cuerpo Único
+                    ctx.shadowBlur = 15 * s;
+                    ctx.shadowColor = ctx.fillStyle;
+                    ctx.fillRect(x2d - (this.config.bodyW*s)/2, y2d - this.config.bodyH*s - bounce, this.config.bodyW*s, this.config.bodyH*s);
+
+                    // Piernas
                     ctx.strokeStyle = ctx.fillStyle;
-                    ctx.lineWidth = 3 * scale;
+                    ctx.lineWidth = 4 * s;
                     for(let i=0; i<4; i++) {
-                        let lx = x2d + (i < 2 ? -s/2.5 : s/2.5);
-                        let move = Math.sin(this.timer * 10 + i) * 12 * scale;
+                        let lx = x2d + (i < 2 ? -15 : 15) * s;
+                        let legMov = Math.sin(this.timer * this.config.legSpeed + i) * 10 * s;
                         ctx.beginPath();
-                        ctx.moveTo(lx, y2d - s*0.3 - hover);
-                        ctx.lineTo(lx + move, y2d - hover/2);
+                        ctx.moveTo(lx, y2d - 10*s - bounce);
+                        ctx.lineTo(lx + legMov, y2d - bounce/2);
                         ctx.stroke();
                     }
-                    // Ojos con "Glow"
-                    ctx.fillStyle = currentWorld.colors.accent;
-                    ctx.shadowBlur = 10 * scale;
-                    ctx.fillRect(x2d - s/3, y2d - s*0.8 - hover, 6*scale, 6*scale);
-                    ctx.fillRect(x2d + s/10, y2d - s*0.8 - hover, 6*scale, 6*scale);
-                    ctx.shadowBlur = 0;
-                } 
-                else if (this.type === 'structure') {
-                    // Edificio complejo
-                    ctx.fillStyle = this.meta.color || '#111';
-                    ctx.fillRect(x2d - s/2, y2d - s, s, s);
-                    // Detalles (Antena)
-                    ctx.strokeStyle = "#444";
-                    ctx.beginPath();
-                    ctx.moveTo(x2d, y2d - s);
-                    ctx.lineTo(x2d, y2d - s - (s*0.5));
-                    ctx.stroke();
-                    // Luces de ventanas
-                    ctx.fillStyle = frames % 60 < 30 ? currentWorld.colors.accent : "#000";
-                    for(let i=0; i<3; i++) {
-                        ctx.fillRect(x2d - s/4, y2d - s + (i*s/4) + 10, s/2, 2*scale);
+
+                    // Ojos Detallados (Procedurales)
+                    ctx.fillStyle = "white";
+                    ctx.shadowBlur = 10 * s;
+                    for(let i=0; i < this.config.eyeCount; i++) {
+                        let ex = x2d - (10 * s) + (i * 8 * s);
+                        ctx.fillRect(ex, y2d - this.config.bodyH*s - bounce + 5*s, 5*s, 5*s);
                     }
+                    ctx.restore();
+                } else {
+                    // Estructuras (Edificios)
+                    ctx.fillStyle = `rgba(10, 15, 30, 0.9)`;
+                    let w = 150 * s, h = 600 * s;
+                    ctx.fillRect(x2d - w/2, y2d - h, w, h);
+                    ctx.strokeStyle = currentWorld.accent;
+                    ctx.lineWidth = 2 * s;
+                    ctx.strokeRect(x2d - w/2, y2d - h, w, h);
+                    
+                    // Ventanas
+                    ctx.fillStyle = currentWorld.accent;
+                    ctx.globalAlpha = 0.3;
+                    for(let j=0; j<5; j++) ctx.fillRect(x2d - w/4, y2d - h + (j*100*s), w/2, 5*s);
+                    ctx.globalAlpha = 1;
                 }
             }
         }
 
-        // --- RENDERIZADO DE BRAZOS (FPS ULTRA) ---
-        function drawFPSView() {
-            const t = Date.now() * 0.004;
-            player.bobSpeed = Math.hypot(player.vX, player.vZ) * 0.15;
-            player.bob += player.bobSpeed;
-
-            const bY = Math.sin(player.bob) * 12;
-            const bX = Math.cos(player.bob * 0.5) * 8;
-            const recoil = player.isAttacking ? Math.sin(player.weaponAnim * 10) * 30 : 0;
+        // --- MANOS SANTINO RUIZ V2 ---
+        function drawHands() {
+            const time = Date.now() * 0.005;
+            player.bob += Math.hypot(player.vX, player.vZ) * 0.12;
+            
+            let swayX = Math.cos(player.bob * 0.5) * 15;
+            let swayY = Math.sin(player.bob) * 10;
+            let atkOffset = Math.sin(player.atkFrame) * 60;
 
             ctx.save();
-            ctx.shadowBlur = 35;
-            ctx.shadowColor = "#000";
-
-            // BRAZO IZQUIERDO
-            drawCustomArm(width * 0.25 + bX, height + 80 - bY + recoil, true, t);
+            // Mano Izquierda
+            drawArm(width * 0.25 + swayX, height + 50 - swayY, true, time, 0);
+            // Mano Derecha (Acción)
+            drawArm(width * 0.75 + swayX, height + 50 - swayY - atkOffset, false, time, atkOffset);
             
-            // BRAZO DERECHO (Con arma según slot)
-            drawCustomArm(width * 0.75 + bX, height + 80 - bY + recoil, false, t);
-
             if(player.isAttacking) {
-                player.weaponAnim += 0.2;
-                if(player.weaponAnim > Math.PI) { player.weaponAnim = 0; player.isAttacking = false; }
+                player.atkFrame += 0.2;
+                if(player.atkFrame > Math.PI) { player.atkFrame = 0; player.isAttacking = false; }
             }
-
             ctx.restore();
         }
 
-        function drawCustomArm(x, y, isLeft, t) {
+        function drawArm(x, y, isLeft, t, atk) {
             let s = isLeft ? 1 : -1;
-            
-            // Manga Táctica
-            ctx.fillStyle = "#0a0a0c";
+            ctx.shadowBlur = 40;
+            ctx.shadowColor = "black";
+
+            // Manga con sombreado
+            let grad = ctx.createLinearGradient(x, y, x + 100*s, y - 400);
+            grad.addColorStop(0, "#050505");
+            grad.addColorStop(1, "#15151a");
+            ctx.fillStyle = grad;
+
             ctx.beginPath();
             ctx.moveTo(x, y);
-            ctx.lineTo(x - 100*s, y - 450);
-            ctx.lineTo(x + 140*s, y - 450);
-            ctx.lineTo(x + 60*s, y);
+            ctx.lineTo(x - 90*s, y - 450);
+            ctx.lineTo(x + 130*s, y - 450);
+            ctx.lineTo(x + 50*s, y);
             ctx.fill();
 
-            // Guante
-            ctx.fillStyle = "#1a1a1e";
+            // Líneas de Neón en el brazo
+            ctx.strokeStyle = currentWorld.accent;
+            ctx.lineWidth = 1.5;
+            ctx.globalAlpha = 0.5;
             ctx.beginPath();
-            ctx.roundRect(x + (isLeft ? -60 : -80), y - 480 + Math.sin(t)*3, 130, 90, 15);
-            ctx.fill();
+            ctx.moveTo(x + 10*s, y);
+            ctx.lineTo(x - 40*s, y - 300);
+            ctx.stroke();
+            ctx.globalAlpha = 1;
 
-            // Detalles de Neón en brazos
-            ctx.strokeStyle = currentWorld.colors.accent;
-            ctx.lineWidth = 2;
+            // Guante Táctico
+            ctx.fillStyle = "#111";
+            ctx.beginPath();
+            ctx.roundRect(x + (isLeft ? -65 : -85), y - 480 + Math.sin(t)*5, 140, 100, 20);
+            ctx.fill();
+            ctx.strokeStyle = "#333";
             ctx.stroke();
 
-            // Reloj Holográfico (Solo Izquierda)
+            // HUD en el brazo izquierdo
             if(isLeft) {
-                ctx.fillStyle = "rgba(0, 255, 204, 0.2)";
-                ctx.fillRect(x - 30, y - 440, 60, 30);
-                ctx.fillStyle = "#fff";
-                ctx.font = "8px Monospace";
-                ctx.fillText("STAMINA", x - 25, y - 425);
-                ctx.fillRect(x - 25, y - 420, 50 * (player.stamina/100), 3);
+                ctx.fillStyle = currentWorld.accent;
+                ctx.font = "bold 10px Arial";
+                ctx.fillText("SYS_V6.5", x - 20, y - 440);
+                ctx.fillRect(x - 20, y - 435, 40, 2);
             }
-
-            // Arma (Solo Derecha)
-            if(!isLeft && selectedSlot === 3) {
-                ctx.fillStyle = currentWorld.colors.accent;
-                ctx.shadowBlur = 20;
-                ctx.fillRect(x - 10, y - 650, 20, 200);
+            
+            // Arma (Blade)
+            if(!isLeft && selectedSlot === 2) {
+                ctx.fillStyle = currentWorld.accent;
+                ctx.shadowBlur = 30;
+                ctx.fillRect(x - 5*s, y - 750, 10, 300);
                 ctx.shadowBlur = 0;
             }
         }
 
-        // --- MOTOR DE MUNDO ---
-        function generateSector(mode) {
+        // --- MUNDO Y LÓGICA ---
+        function initWorld(mode) {
             inGame = true;
-            currentWorld.objects = [];
+            currentWorld.entities = [];
             currentWorld.weather = [];
-            currentWorld.biome = mode;
-
+            
             if(mode === 'TÉTRICO') {
-                currentWorld.colors = { fog: '#0a0000', ground: '#020000', accent: '#ff0033' };
-                addLog("ADVERTENCIA: Sector hostil cargado.");
-                // Partículas de "Sangre/Ceniza"
-                for(let i=0; i<150; i++) currentWorld.weather.push({x: Math.random()*width, y: Math.random()*height, s: Math.random()*3 + 1});
+                currentWorld.colors = { bg: '#080000', accent: '#ff0033', fog: '#050000' };
+                for(let i=0; i<150; i++) currentWorld.weather.push({x: Math.random()*width, y: Math.random()*height, s: Math.random()*4+2});
             } else {
-                currentWorld.colors = { fog: '#00050a', ground: '#000205', accent: '#00ffcc' };
-                addLog("Sector estelar calibrado correctamente.");
+                currentWorld.colors = { bg: '#00050a', accent: '#00ffcc', fog: '#000205' };
             }
 
-            // Generación masiva
-            for(let i=0; i<120; i++) {
-                let type = Math.random() > 0.8 ? 'creature' : 'structure';
-                let dist = 500 + Math.random() * 6000;
+            // Generar Entidades
+            for(let i=0; i<100; i++) {
+                let type = Math.random() > 0.7 ? 'creature' : 'structure';
+                let dist = 600 + Math.random() * 5000;
                 let ang = Math.random() * Math.PI * 2;
-                currentWorld.objects.push(new Entity(
-                    Math.cos(ang)*dist, Math.sin(ang)*dist, 
-                    type, 
-                    { size: 50 + Math.random()*150, color: `hsl(${Math.random()*360}, 30%, 10%)` }
-                ));
+                currentWorld.entities.push(new Entity(Math.cos(ang)*dist, Math.sin(ang)*dist, type));
             }
 
             document.getElementById('game-hud').style.display = 'block';
             document.getElementById('crosshair').style.display = 'block';
-            document.getElementById('world-name').innerText = "SECTOR " + (Math.random()*1000).toFixed(0);
-            document.getElementById('biome-label').innerText = "BIOMA: " + mode;
+            document.getElementById('world-name').innerText = "WORLD_GEN: " + mode;
+            addLog("Mundo " + mode + " generado con éxito.");
         }
 
         function update() {
             if(inGame) {
-                const speed = keys['ShiftLeft'] ? 14 : 7;
-                if(keys['KeyW']) { player.vX += Math.sin(player.yaw) * 1.1; player.vZ -= Math.cos(player.yaw) * 1.1; }
-                if(keys['KeyS']) { player.vX -= Math.sin(player.yaw) * 1.1; player.vZ += Math.cos(player.yaw) * 1.1; }
-                if(keys['KeyA']) player.yaw -= 0.055;
-                if(keys['KeyD']) player.yaw += 0.055;
+                let moveSpeed = keys['ShiftLeft'] ? 18 : 9;
+                let dx = 0, dz = 0;
+                if(keys['KeyW']) { dx += Math.sin(player.yaw) * moveSpeed; dz -= Math.cos(player.yaw) * moveSpeed; }
+                if(keys['KeyS']) { dx -= Math.sin(player.yaw) * moveSpeed; dz += Math.cos(player.yaw) * moveSpeed; }
+                if(keys['KeyA']) player.yaw -= 0.05;
+                if(keys['KeyD']) player.yaw += 0.05;
 
-                player.x += player.vX; player.z += player.vZ;
-                player.vX *= 0.84; player.vZ *= 0.84;
+                // Colisión básica
+                player.x += dx; player.z += dz;
+                player.vX = dx; player.vZ = dz;
 
-                currentWorld.objects.forEach(o => o.update());
-                
-                // Clima
+                currentWorld.entities.forEach(e => e.update());
                 currentWorld.weather.forEach(p => {
-                    p.y += p.s * 2;
-                    if(p.y > height) p.y = -10;
+                    p.y += p.s;
+                    if(p.y > height) p.y = -20;
                 });
             }
             frames++;
         }
 
         function draw() {
-            // Fondo / Cielo
-            let grad = ctx.createLinearGradient(0,0,0,height);
-            grad.addColorStop(0, '#000');
-            grad.addColorStop(0.5, currentWorld.colors.fog);
-            grad.addColorStop(1, currentWorld.colors.ground);
-            ctx.fillStyle = grad;
+            ctx.fillStyle = currentWorld.colors.bg;
             ctx.fillRect(0,0,width,height);
 
             if(inGame) {
-                // Raycasting / Proyección 3D
-                let renderStack = currentWorld.objects.map(o => {
-                    let dx = o.x - player.x, dz = o.z - player.z;
+                // Render 3D Proyectado
+                let renderList = currentWorld.entities.map(e => {
+                    let dx = e.x - player.x, dz = e.z - player.z;
                     let rx = dx * Math.cos(-player.yaw) - dz * Math.sin(-player.yaw);
                     let rz = dx * Math.sin(-player.yaw) + dz * Math.cos(-player.yaw);
-                    return { o, rx, rz };
-                }).filter(r => r.rz > 15).sort((a,b) => b.rz - a.rz);
+                    return { e, rx, rz };
+                }).filter(r => r.rz > 20).sort((a,b) => b.rz - a.rz);
 
-                renderStack.forEach(r => {
-                    let scale = 1200 / r.rz;
+                renderList.forEach(r => {
+                    let scale = 1100 / r.rz;
                     let x2d = r.rx * scale + width/2;
-                    let y2d = height/2 + (50 * scale); // Offset de suelo
-                    r.o.draw(scale, x2d, y2d);
+                    let y2d = height/2 + (100 * scale);
+                    r.e.draw(scale, x2d, y2d);
                 });
 
-                // Render Clima
+                // Clima
                 ctx.fillStyle = currentWorld.colors.accent;
-                currentWorld.weather.forEach(p => ctx.fillRect(p.x, p.y, 2, p.s * 4));
+                currentWorld.weather.forEach(p => ctx.fillRect(p.x, p.y, 2, p.s * 3));
 
-                drawFPSView();
+                drawHands();
 
-                // Efecto Viñeta
-                let v = ctx.createRadialGradient(width/2, height/2, 0, width/2, height/2, width*0.9);
-                v.addColorStop(0, "transparent");
-                v.addColorStop(1, "rgba(0,0,0,0.8)");
-                ctx.fillStyle = v; ctx.fillRect(0,0,width,height);
+                // Efecto de daño si es tétrico
+                if(currentWorld.accent === '#ff0033' && frames % 100 < 5) {
+                    ctx.fillStyle = "rgba(255,0,0,0.1)";
+                    ctx.fillRect(0,0,width,height);
+                }
             } else {
-                // MENÚ SANTINO
                 ctx.fillStyle = "white";
                 ctx.textAlign = "center";
-                ctx.font = "30px Courier New";
-                ctx.fillText("GENESIS ENGINE OVERLOAD", width/2, height/2 - 40);
-                ctx.font = "15px Courier New";
-                ctx.fillStyle = currentWorld.colors.accent;
-                ctx.fillText("[W] INICIAR SIMULACIÓN ESTELAR | [T] MUNDO TÉTRICO", width/2, height/2 + 20);
-                if(keys['KeyW']) generateSector('NORMAL');
-                if(keys['KeyT']) generateSector('TÉTRICO');
+                ctx.font = "25px Courier New";
+                ctx.fillText("GENESIS ENGINE V6.5", width/2, height/2 - 50);
+                ctx.font = "14px Courier New";
+                ctx.fillText("PULSA [W] NORMAL | [T] TÉTRICO", width/2, height/2);
+                if(keys['KeyW']) initWorld('ESTELAR');
+                if(keys['KeyT']) initWorld('TÉTRICO');
             }
 
             update();
             requestAnimationFrame(draw);
         }
 
-        // IA Lumina Intro
+        // IA Lumina
         setTimeout(() => {
-            const lumina = document.getElementById('lumina-container');
+            const container = document.getElementById('lumina-container');
             const msg = document.getElementById('ai-msg');
-            lumina.classList.add('visible');
-            msg.innerText = "SANTINO: El motor ha superado los límites de renderizado. He añadido IA a las criaturas y un sistema de armas holográficas. ¡Cuidado con el bioma tétrico!";
-            setTimeout(() => lumina.classList.remove('visible'), 7000);
-        }, 1500);
+            container.classList.add('visible');
+            msg.innerText = "¡SANTINO! He restaurado los ojos brillantes y calibrado la anatomía de las criaturas. El motor es ahora 200% más inmersivo.";
+            setTimeout(() => container.classList.remove('visible'), 6000);
+        }, 2000);
 
         draw();
     </script>
