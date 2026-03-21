@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ANX - Genesis Engine V9.5 (HORROR UPDATE)</title>
+    <title>ANX - Genesis Engine V9.8 (ARMS & HORROR FIX)</title>
     <style>
         :root { --accent: #008cff; --bg: #000103; --ai-color: #00ffcc; }
         body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: var(--bg); color: white; font-family: 'Courier New', monospace; overflow: hidden; }
@@ -19,8 +19,8 @@
         #lumina-container.visible { bottom: 40px; }
         .ai-core { width: 40px; height: 40px; background: #fff; border-radius: 50%; margin: 0 auto; box-shadow: 0 0 30px var(--ai-color); }
         
-        .scary-flash { animation: scary 0.2s infinite; }
-        @keyframes scary { 0% { opacity: 1; } 50% { opacity: 0.7; filter: contrast(1.5) sepia(0.5) hue-rotate(-20deg); } 100% { opacity: 1; } }
+        .scary-flash { animation: scary 0.15s infinite; }
+        @keyframes scary { 0% { opacity: 1; } 50% { opacity: 0.8; filter: contrast(2) brightness(0.8) sepia(1) hue-rotate(-50deg); } 100% { opacity: 1; } }
     </style>
 </head>
 <body>
@@ -28,8 +28,8 @@
     <canvas id="universe-canvas"></canvas>
     
     <div id="ai-brain">
-        <div style="color:var(--ai-color); font-weight:bold;">GENESIS_V9.5_CORE</div>
-        <div id="ai-log">Protocolos de observación activados...</div>
+        <div style="color:var(--ai-color); font-weight:bold;">GENESIS_V9.8_CORE</div>
+        <div id="ai-log">Analizando extremidades del sujeto...</div>
     </div>
 
     <div id="game-hud">
@@ -53,7 +53,7 @@
         let portals = [];
         let stars = [];
 
-        let player = { x: 0, z: 0, yaw: 0, targetYaw: 0 };
+        let player = { x: 0, z: 0, yaw: 0, targetYaw: 0, isMoving: false };
         let currentWorld = { mode: '', entities: [], animals: [], colors: {}, isScary: false };
         const keys = {};
 
@@ -73,7 +73,7 @@
             if(e.code === 'Escape' && inGame) {
                 inGame = false;
                 document.body.classList.remove('scary-flash');
-                addLog("Saliendo de la zona de peligro...");
+                addLog("Desconectando interfaz neuronal...");
                 player.x = 0; player.z = 0;
             }
         });
@@ -86,7 +86,7 @@
         function autoSpawn() {
             const config = [
                 {col: '#00f2ff', scary: false},
-                {col: '#ff0033', scary: true},
+                {col: '#ff0000', scary: true},
                 {col: '#ffcc00', scary: false},
                 {col: '#a200ff', scary: false}
             ];
@@ -95,7 +95,7 @@
                 portals.push({
                     x: Math.cos(angle) * 1200,
                     z: Math.sin(angle) * 1200 + 1500,
-                    label: config[i].scary ? "VOID_EXTERMINATOR" : generateAIName(),
+                    label: config[i].scary ? "SECTOR_RED_VOID" : generateAIName(),
                     color: config[i].col,
                     isScary: config[i].scary,
                     hovered: false,
@@ -139,18 +139,18 @@
                     this.z += Math.sin(this.angle) * 3;
                     if(Math.random() > 0.97) this.angle = Math.random() * Math.PI * 2;
                 } else {
-                    // MODO TÉTRICO: Mirar siempre al jugador
+                    // MUNDO TETRICO: Los animales NO se mueven de su sitio
+                    // Solo rotan para mirar al jugador
                     this.angle = Math.atan2(player.x - this.x, player.z - this.z);
                 }
             }
             draw(scale, x2d, y2d) {
                 let jump = this.scary ? 0 : Math.abs(Math.sin(frames*0.15 + this.seed)) * 40 * scale;
-                let bodyCol = this.scary ? "#300" : this.color;
+                let bodyCol = this.scary ? "#200" : this.color;
                 
                 ctx.save();
                 ctx.translate(x2d, y2d - jump);
                 
-                // Patas
                 ctx.strokeStyle = bodyCol;
                 ctx.lineWidth = 3 * scale;
                 ctx.beginPath();
@@ -158,31 +158,51 @@
                 ctx.moveTo(10*scale, 0); ctx.lineTo(15*scale, 10*scale);
                 ctx.stroke();
 
-                // Cuerpo
                 ctx.fillStyle = bodyCol;
                 ctx.beginPath();
                 ctx.ellipse(0, -20*scale, 20*scale, 15*scale, 0, 0, Math.PI*2);
                 ctx.fill();
 
-                // Cabeza
                 ctx.beginPath();
                 ctx.arc(0, -35*scale, 12*scale, 0, Math.PI*2);
                 ctx.fill();
                 
-                // Ojos (Rojos intensos si es scary)
-                ctx.fillStyle = this.scary ? "#ff0000" : "white";
-                let eyeGlow = this.scary ? Math.sin(frames * 0.2) * 5 : 0;
-                ctx.shadowBlur = this.scary ? 10 + eyeGlow : 0;
+                ctx.fillStyle = this.scary ? "#f00" : "white";
+                ctx.shadowBlur = this.scary ? 15 : 0;
                 ctx.shadowColor = "red";
-                
                 ctx.beginPath();
-                ctx.arc(-5*scale, -38*scale, (this.scary ? 4 : 3)*scale, 0, Math.PI*2);
-                ctx.arc(5*scale, -38*scale, (this.scary ? 4 : 3)*scale, 0, Math.PI*2);
+                ctx.arc(-5*scale, -38*scale, (this.scary?4:3)*scale, 0, Math.PI*2);
+                ctx.arc(5*scale, -38*scale, (this.scary?4:3)*scale, 0, Math.PI*2);
                 ctx.fill();
                 
                 ctx.restore();
                 ctx.shadowBlur = 0;
             }
+        }
+
+        function drawArms() {
+            let bob = Math.sin(frames * 0.15) * (player.isMoving ? 10 : 2);
+            let sideBob = Math.cos(frames * 0.08) * (player.isMoving ? 5 : 1);
+            
+            ctx.fillStyle = "#1a1a1a"; // Color de las mangas/brazos
+            ctx.strokeStyle = currentWorld.colors.accent;
+            ctx.lineWidth = 2;
+
+            // Brazo Izquierdo
+            ctx.save();
+            ctx.translate(width*0.2 + sideBob, height + 20 + bob);
+            ctx.rotate(-0.2);
+            ctx.fillRect(0, -200, 80, 300);
+            ctx.strokeRect(0, -200, 80, 300);
+            ctx.restore();
+
+            // Brazo Derecho
+            ctx.save();
+            ctx.translate(width*0.8 - 80 - sideBob, height + 20 + bob);
+            ctx.rotate(0.2);
+            ctx.fillRect(0, -200, 80, 300);
+            ctx.strokeRect(0, -200, 80, 300);
+            ctx.restore();
         }
 
         function initWorld(p) {
@@ -191,11 +211,11 @@
             currentWorld.entities = [];
             currentWorld.animals = [];
             currentWorld.isScary = p.isScary;
-            currentWorld.colors = { bg: p.isScary ? '#1a0000' : '#00020a', accent: p.color };
+            currentWorld.colors = { bg: p.isScary ? '#300000' : '#00020a', accent: p.color };
             
             if(p.isScary) {
                 document.body.classList.add('scary-flash');
-                addLog("ADVERTENCIA: ENTIDAD DETECTADA. NO TE MUEVAS.");
+                addLog("ERROR: LOCALIZACIÓN HOSTIL. ELLOS TE VEN.");
             } else {
                 addLog("Sincronizando con " + p.label + "...");
             }
@@ -203,7 +223,7 @@
             for(let i=0; i<60; i++) {
                 let a = Math.random()*Math.PI*2, d = 2000+Math.random()*5000;
                 currentWorld.entities.push(new Structure(Math.cos(a)*d, Math.sin(a)*d, p.color));
-                currentWorld.animals.push(new Animal(Math.cos(a)*(d-500), Math.sin(a)*(d-500), p.color, p.isScary));
+                currentWorld.animals.push(new Animal(Math.cos(a)*(d-400), Math.sin(a)*(d-400), p.color, p.isScary));
             }
             
             document.getElementById('game-hud').style.display = 'block';
@@ -212,20 +232,19 @@
         }
 
         function draw() {
-            // Fondo
             ctx.fillStyle = inGame ? currentWorld.colors.bg : "#000105";
             ctx.fillRect(0,0,width,height);
 
-            // Efecto parpadeo tétrico
-            if(inGame && currentWorld.isScary && Math.random() > 0.92) {
-                ctx.fillStyle = "rgba(255, 0, 0, 0.05)";
+            if(inGame && currentWorld.isScary && Math.random() > 0.9) {
+                ctx.fillStyle = "rgba(255, 0, 0, 0.1)";
                 ctx.fillRect(0,0,width,height);
             }
 
             player.yaw += (player.targetYaw - player.yaw) * 0.1;
 
             if(inGame) {
-                let speed = currentWorld.isScary ? 18 : 30; // Más lento en el mundo tétrico para dar tensión
+                player.isMoving = keys['KeyW'] || keys['KeyS'];
+                let speed = currentWorld.isScary ? 15 : 30;
                 if(keys['KeyW']) { player.x += Math.sin(player.yaw) * speed; player.z -= Math.cos(player.yaw) * speed; }
                 if(keys['KeyS']) { player.x -= Math.sin(player.yaw) * speed; player.z += Math.cos(player.yaw) * speed; }
                 if(keys['KeyA']) player.targetYaw -= 0.06;
@@ -243,13 +262,13 @@
                     let rx = dx * Math.cos(-player.yaw) - dz * Math.sin(-player.yaw);
                     let rz = dx * Math.sin(-player.yaw) + dz * Math.cos(-player.yaw);
                     if(rz > 50) {
-                        let fov = (keys['KeyW'] && !currentWorld.isScary) ? 950 : 850;
-                        let s = fov / rz;
+                        let s = 850 / rz;
                         e.draw(s, rx * s + width/2, height/2 + 250*s);
                     }
                 });
+
+                drawArms(); // Dibujar los brazos encima de todo
             } else {
-                // MENÚ DE SELECCIÓN
                 document.getElementById('game-hud').style.display = 'none';
                 stars.forEach(s => {
                     let x = s.x / (s.z/1000) + width/2;
@@ -273,7 +292,6 @@
                         ctx.translate(x, y);
                         if(p.hovered) ctx.scale(1.2, 1.2);
                         ctx.rotate(p.rot);
-                        
                         for(let j=0; j<3; j++) {
                             ctx.strokeStyle = p.color;
                             ctx.lineWidth = (p.hovered ? 4 : 2) * s;
@@ -282,13 +300,11 @@
                         }
                         ctx.restore();
                         ctx.globalAlpha = 1;
-
                         ctx.shadowBlur = p.hovered ? 50 : 20;
                         ctx.shadowColor = p.color;
                         ctx.fillStyle = p.hovered ? "white" : p.color;
                         ctx.beginPath(); ctx.arc(x, y, (p.hovered ? 90 : 70)*s, 0, Math.PI*2); ctx.fill();
                         ctx.shadowBlur = 0;
-                        
                         ctx.fillStyle = "white"; ctx.font = `bold ${24*s}px Courier`;
                         ctx.textAlign = "center";
                         ctx.fillText(p.label, x, y + 150*s);
@@ -304,7 +320,7 @@
         setTimeout(() => {
             autoSpawn();
             document.getElementById('lumina-container').classList.add('visible');
-            document.getElementById('ai-msg').innerText = "SANTINO, ten cuidado con el portal rojo. Los bio-sensores detectan una mirada colectiva desde el otro lado...";
+            document.getElementById('ai-msg').innerText = "SANTINO, he detectado movimiento en tus extremidades. El sistema está listo.";
         }, 800);
 
         draw();
