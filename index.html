@@ -47,7 +47,7 @@
         <strong style="color: #4cc9f0; font-size: 1.1rem;">PROTOTIPO HD-2D ENGINE</strong><br><br>
         • <strong>Click Izquierdo:</strong> Capturar Ratón y Mirar<br>
         • <strong>Moverse:</strong> W, A, S, D (Relativo a la Cámara)<br>
-        • <strong>Render:</strong> Sprite 2D Animado por Fotogramas
+        • <strong>Render:</strong> Sprite Fiel a Referencia con Animación
     </div>
 
     <script type="importmap">
@@ -74,7 +74,7 @@
         document.body.appendChild(renderer.domElement);
 
         // 2. ILUMINACIÓN CINEMÁTICA
-        const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.65);
         scene.add(ambientLight);
 
         const sunLight = new THREE.DirectionalLight(0xfff5e6, 1.2);
@@ -85,24 +85,24 @@
         sunLight.shadow.bias = -0.0005;
         scene.add(sunLight);
 
-        // 3. GENERACIÓN DEL MAPA AVANZADO
+        // 3. GENERACIÓN DEL MAPA CON RELIEVES SUAVES Y MÚLTIPLES LAGOS
         const tamañoMundo = 200;
         const segmentos = 100;
         const terrainGeo = new THREE.PlaneGeometry(tamañoMundo, tamañoMundo, segmentos, segmentos);
         
         function obtenerAlturaTerreno(x, z) {
-            // Capa colinas suaves
-            let y = Math.sin(x * 0.03) * Math.cos(z * 0.03) * 6;
-            // Capa micro-relieve para imperfecciones naturales
-            y += Math.sin(x * 0.12) * Math.cos(z * 0.12) * 0.8;
+            // Relieve sutil y pequeñas colinas caminables (frecuencia más baja y menos amplitud)
+            let y = Math.sin(x * 0.04) * Math.cos(z * 0.04) * 2.5;
             
-            // Muralla montañosa en bordes para delimitar el nivel de juego
-            const distCentro = Math.sqrt(x*x + z*z);
-            if (distCentro > 60) {
-                const rampa = Math.pow((distCentro - 60) * 0.18, 2);
-                y += rampa * (Math.sin(x * 0.08) * 3 + 4);
-            }
-            if (y < -4) y = -4 + (y + 4) * 0.2; // Fondo del lago suavizado
+            // Frecuencia secundaria para crear cuencas orgánicas de múltiples lagos
+            let cuencasLagos = Math.sin(x * 0.07 + 2) * Math.sin(z * 0.06 * z * 0.01) * 3.5;
+            y += cuencasLagos;
+
+            // Micro-relieve para imperfecciones naturales de la tierra
+            y += Math.sin(x * 0.2) * Math.cos(z * 0.2) * 0.3;
+
+            // Nivelación del fondo del agua para que los lagos sean planos y caminables en las orillas
+            if (y < -2.5) y = -2.5 + (y + 2.5) * 0.15; 
             return y;
         }
 
@@ -116,163 +116,219 @@
         terrainGeo.rotateX(-Math.PI / 2);
 
         const terrainMat = new THREE.MeshStandardMaterial({ 
-            color: 0x606c38, 
-            roughness: 0.85,
+            color: 0x7da453, 
+            roughness: 0.9,
             flatShading: true 
         });
         const terreno = new THREE.Mesh(terrainGeo, terrainMat);
         terreno.receiveShadow = true;
         scene.add(terreno);
 
-        // Agua Estilizada
+        // Sistema de Lagos (Capa de agua uniforme que inunda las cuencas bajas a la altura justa)
         const waterGeo = new THREE.PlaneGeometry(tamañoMundo, tamañoMundo);
         const waterMat = new THREE.MeshStandardMaterial({ 
-            color: 0x1d3557, 
+            color: 0x22577a, 
             transparent: true, 
-            opacity: 0.8,
+            opacity: 0.75,
             roughness: 0.1,
             metalness: 0.1
         });
-        const lago = new THREE.Mesh(waterGeo, waterMat);
-        lago.rotation.x = -Math.PI / 2;
-        lago.position.y = -3.0;
-        scene.add(lago);
+        const aguaSuelo = new THREE.Mesh(waterGeo, waterMat);
+        aguaSuelo.rotation.x = -Math.PI / 2;
+        aguaSuelo.position.y = -1.2; // Genera varios lagos en zonas donde el relieve baje de este nivel
+        scene.add(aguaSuelo);
 
-        // Vegetación Mejorada (Árboles estilizados con degradados)
+        // 4. ENTIDADES DEL MUNDO (ÁRBOLES REDUCIDOS Y CASITAS)
         const crearArbolEstilizado = (x, z, h) => {
             const grupo = new THREE.Group();
             const tronco = new THREE.Mesh(
-                new THREE.CylinderGeometry(0.15, 0.35, 3, 5),
-                new THREE.MeshStandardMaterial({ color: 0x3d2616, roughness: 0.9 })
+                new THREE.CylinderGeometry(0.12, 0.25, 2, 5),
+                new THREE.MeshStandardMaterial({ color: 0x4a3525, roughness: 0.9 })
             );
-            tronco.position.y = 1.5;
+            tronco.position.y = 1;
             tronco.castShadow = true;
             grupo.add(tronco);
 
-            // Copa en capas de polígonos
-            for(let i=0; i<3; i++) {
-                const copa = new THREE.Mesh(
-                    new THREE.ConeGeometry(1.6 - i*0.3, 2.2, 5),
-                    new THREE.MeshStandardMaterial({ color: new THREE.Color(0x283618).multiplyScalar(1 + i*0.15), flatShading: true })
-                );
-                copa.position.y = 3.0 + (i * 1.2);
-                copa.castShadow = true;
-                grupo.add(copa);
-            }
+            const copa = new THREE.Mesh(
+                new THREE.ConeGeometry(1.2, 2.5, 5),
+                new THREE.MeshStandardMaterial({ color: 0x386641, flatShading: true })
+            );
+            copa.position.y = 2.5;
+            copa.castShadow = true;
+            grupo.add(copa);
+
             grupo.position.set(x, h, z);
             scene.add(grupo);
         };
 
-        for (let i = 0; i < 150; i++) {
-            const x = (Math.random() - 0.5) * 110;
-            const z = (Math.random() - 0.5) * 110;
+        const crearCasita = (x, z, h) => {
+            const casa = new THREE.Group();
+            
+            // Base/Estructura de la casa
+            const baseGeo = new THREE.BoxGeometry(3, 2.5, 3);
+            const baseMat = new THREE.MeshStandardMaterial({ color: 0xf4f1de, roughness: 0.8, flatShading: true });
+            const base = new THREE.Mesh(baseGeo, baseMat);
+            base.position.y = 1.25;
+            base.castShadow = true;
+            base.receiveShadow = true;
+            casa.add(base);
+
+            // Techo de la casa con caída a dos aguas
+            const techoGeo = new THREE.ConeGeometry(2.5, 1.8, 4);
+            const techoMat = new THREE.MeshStandardMaterial({ color: 0xe07a5f, roughness: 0.7, flatShading: true });
+            const techo = new THREE.Mesh(techoGeo, techoMat);
+            techo.position.y = 2.5 + 0.5;
+            techo.rotation.y = Math.PI / 4; // Rotar para que encaje alineado al cubo
+            techo.castShadow = true;
+            casa.add(techo);
+
+            // Pequeña puerta oscura decorativa
+            const puertaGeo = new THREE.PlaneGeometry(0.7, 1.3);
+            const puertaMat = new THREE.MeshStandardMaterial({ color: 0x3d1a04 });
+            const puerta = new THREE.Mesh(puertaGeo, puertaMat);
+            puerta.position.set(0, 0.65, 1.51); // Justo al frente de la pared
+            casa.add(puerta);
+
+            casa.position.set(x, h, z);
+            scene.add(casa);
+        };
+
+        // Distribución del decorado del mapa
+        for (let i = 0; i < 60; i++) { // Cantidad de árboles reducida a la mitad
+            const x = (Math.random() - 0.5) * 120;
+            const z = (Math.random() - 0.5) * 120;
             const h = obtenerAlturaTerreno(x, z);
-            if (h > -2.5) crearArbolEstilizado(x, z, h);
+            if (h > -0.8) crearArbolEstilizado(x, z, h);
         }
 
-        // 4. GENERADOR PROFESIONAL DE TEXTURAS (Spritesheet Pixel-Art)
-        function crearSpritesheetAvatar() {
+        for (let i = 0; i < 12; i++) { // Generar pequeñas casitas en zonas elevadas secas
+            const x = (Math.random() - 0.5) * 100;
+            const z = (Math.random() - 0.5) * 100;
+            const h = obtenerAlturaTerreno(x, z);
+            // Evitar construir directamente dentro o muy cerca de los lagos
+            if (h > 0.5 && (Math.abs(x) > 8 || Math.abs(z) > 8)) {
+                crearCasita(x, z, h);
+            }
+        }
+
+        // 5. GENERADOR ARTÍSTICO FIEL A TU IMAGEN REFE (Pixel-Art con Sombras)
+        function crearSpritesheetFiel() {
             const canvas = document.createElement('canvas');
-            canvas.width = 192; // 3 cuadros de 64x128 píxeles de alto
+            canvas.width = 192; // 3 cuadros de 64x128 píxeles
             canvas.height = 128;
             const ctx = canvas.getContext('2d');
             ctx.imageSmoothingEnabled = false;
 
-            // Función interna para dibujar un frame específico
-            function dibujarFrame(offsetX, estadoAnim) {
-                // Sombra proyectada en los pies dentro del propio sprite
-                ctx.fillStyle = 'rgba(0, 0, 0, 0.15)';
-                ctx.beginPath();
-                ctx.ellipse(offsetX + 32, 120, 14, 5, 0, 0, Math.PI * 2);
-                ctx.fill();
+            function dibujarCuadroPersonaje(offsetX, estado) {
+                // Paleta exacta de tu imagen
+                const colorPiel = '#eab295';
+                const colorSombraPiel = '#cf9174';
+                const colorContorno = '#181216';
 
-                // Cabeza Humanoide Proporcionada
-                ctx.fillStyle = '#fcd5b5'; // Piel
-                ctx.fillRect(offsetX + 18, 20, 28, 28);
-                ctx.strokeStyle = '#1e1a17';
-                ctx.lineWidth = 2;
-                ctx.strokeRect(offsetX + 18, 20, 28, 28);
-
-                // Cabello con Volumen Marrón (Como la foto enviada)
-                ctx.fillStyle = '#5c3d24';
-                ctx.fillRect(offsetX + 16, 16, 32, 10);
-                ctx.fillRect(offsetX + 16, 26, 6, 12);
-                ctx.fillRect(offsetX + 42, 26, 6, 12);
-
-                // Ojos y Expresión Minimalista Profesional
-                ctx.fillStyle = '#1e1a17';
-                ctx.fillRect(offsetX + 25, 30, 4, 4);
-                ctx.fillRect(offsetX + 35, 30, 4, 4);
-                ctx.fillRect(offsetX + 29, 40, 6, 2); // Boca
-
-                // Ropa: Camiseta Verde con Sombreado
-                ctx.fillStyle = '#2a9d8f'; // Cuerpo base verde
-                ctx.fillRect(offsetX + 16, 48, 32, 36);
-                ctx.strokeRect(offsetX + 16, 48, 32, 36);
-                ctx.fillStyle = '#264653'; // Mangas/Detalles
-                ctx.fillRect(offsetX + 12, 48, 4, 16);
-                ctx.fillRect(offsetX + 48, 48, 4, 16);
-
-                // Ropa: Pantalón Corto/Short Azul
-                ctx.fillStyle = '#e76f51'; // Cambiamos a un tono complementario para balance de diseño
-                ctx.fillStyle = '#457b9d'; // Azul Denim
-                ctx.fillRect(offsetX + 18, 84, 28, 14);
-                ctx.strokeRect(offsetX + 18, 84, 28, 14);
-
-                // Piernas Dinámicas según Estado de Animación
-                ctx.fillStyle = '#fcd5b5'; // Color de Piel
-                let piernaIzqY = 98, piernaDerY = 98;
+                // --- 1. CABEZA CÚBICA CON SOMBREADO ---
+                // Base contorno de la cabeza
+                ctx.fillStyle = colorContorno;
+                ctx.fillRect(offsetX + 14, 16, 36, 36);
                 
-                if (estadoAnim === 'walk1') { piernaIzqY -= 4; }
-                if (estadoAnim === 'walk2') { piernaDerY -= 4; }
+                // Fondo base piel de la cabeza
+                ctx.fillStyle = colorPiel;
+                ctx.fillRect(offsetX + 16, 18, 32, 32);
 
-                // Pierna Izquierda y Zapato
-                ctx.fillRect(offsetX + 22, piernaIzqY, 6, 16);
-                ctx.fillStyle = '#e63946'; // Zapato Rojo
-                ctx.fillRect(offsetX + 20, piernaIzqY + 12, 8, 6);
+                // Sombra de volumen del lado izquierdo y parte baja (como en tu foto)
+                ctx.fillStyle = colorSombraPiel;
+                ctx.fillRect(offsetX + 16, 18, 6, 32);  // Lado izquierdo sombreado
+                ctx.fillRect(offsetX + 16, 44, 32, 6);   // Barbilla baja sombreada
 
-                // Pierna Derecha y Zapato
-                ctx.fillStyle = '#fcd5b5';
-                ctx.fillRect(offsetX + 36, piernaDerY, 6, 16);
-                ctx.fillStyle = '#e63946';
-                ctx.fillRect(offsetX + 36, piernaDerY + 12, 8, 6);
+                // Oreja izquierda (baja y sombreada)
+                ctx.fillStyle = colorContorno;
+                ctx.fillRect(offsetX + 10, 32, 6, 12);
+                ctx.fillStyle = colorSombraPiel;
+                ctx.fillRect(offsetX + 12, 34, 4, 8);
+
+                // Rostro: Ojos, Cejas y Expresión Neutra
+                ctx.fillStyle = colorContorno;
+                ctx.fillRect(offsetX + 25, 28, 4, 6);  // Ojo izquierdo
+                ctx.fillRect(offsetX + 37, 28, 4, 6);  // Ojo derecho
+                ctx.fillRect(offsetX + 24, 24, 6, 2);  // Ceja izquierda
+                ctx.fillRect(offsetX + 36, 24, 6, 2);  // Ceja derecha
+                ctx.fillRect(offsetX + 30, 38, 8, 2);  // Boca plana exacta
+
+                // --- 2. CUERPO HUMANOIDE ---
+                // Cuello contorno y relleno
+                ctx.fillStyle = colorContorno;
+                ctx.fillRect(offsetX + 24, 52, 16, 4);
+
+                // Contorno del torso entero
+                ctx.fillStyle = colorContorno;
+                ctx.fillRect(offsetX + 18, 56, 28, 40);
+
+                // Relleno de piel del Torso
+                ctx.fillStyle = colorPiel;
+                ctx.fillRect(offsetX + 20, 58, 24, 36);
+                
+                // Sombra del lado izquierdo del torso
+                ctx.fillStyle = colorSombraPiel;
+                ctx.fillRect(offsetX + 20, 58, 6, 36);
+
+                // Brazos pegados al cuerpo
+                ctx.fillStyle = colorContorno;
+                ctx.fillRect(offsetX + 14, 60, 5, 24); // Brazo izq contorno
+                ctx.fillRect(offsetX + 45, 60, 5, 24); // Brazo der contorno
+                ctx.fillStyle = colorSombraPiel;
+                ctx.fillRect(offsetX + 15, 61, 3, 22); // Brazo izq relleno (sombra)
+                ctx.fillStyle = colorPiel;
+                ctx.fillRect(offsetX + 46, 61, 3, 22); // Brazo der relleno
+
+                // --- 3. PIERNAS CON CICLO DE CAMINAR ---
+                let izqOffsety = 0;
+                let derOffsety = 0;
+
+                if (estado === 'paso1') { izqOffsety = -4; }
+                if (estado === 'paso2') { derOffsety = -4; }
+
+                // Pierna Izquierda
+                ctx.fillStyle = colorContorno;
+                ctx.fillRect(offsetX + 21, 96 + izqOffsety, 8, 22);
+                ctx.fillStyle = colorSombraPiel; // Pierna izquierda va al fondo en sombra
+                ctx.fillRect(offsetX + 23, 98 + izqOffsety, 4, 18);
+
+                // Pierna Derecha
+                ctx.fillStyle = colorContorno;
+                ctx.fillRect(offsetX + 35, 96 + derOffsety, 8, 22);
+                ctx.fillStyle = colorPiel;
+                ctx.fillRect(offsetX + 37, 98 + derOffsety, 4, 18);
             }
 
-            // Generamos los 3 cuadros del buffer
-            dibujarFrame(0, 'idle');
-            dibujarFrame(64, 'walk1');
-            dibujarFrame(128, 'walk2');
+            // Renderizar los tres estados en la tira horizontal de la textura
+            dibujarCuadroPersonaje(0, 'idle');
+            dibujarCuadroPersonaje(64, 'paso1');
+            dibujarCuadroPersonaje(128, 'paso2');
 
             return new THREE.CanvasTexture(canvas);
         }
 
-        // Configuración de Mapeo UV de la Textura
-        const spritesheetTexture = crearSpritesheetAvatar();
+        // Carga y mapeo UV del sprite unificado
+        const spritesheetTexture = crearSpritesheetFiel();
         spritesheetTexture.magFilter = THREE.NearestFilter;
         spritesheetTexture.minFilter = THREE.NearestFilter;
-        
-        // Dividimos la textura para mostrar solo 1 cuadro a la vez (1/3 horizontal)
-        spritesheetTexture.repeat.set(1/3, 1);
+        spritesheetTexture.repeat.set(1/3, 1); // Encuadrar sólo un frame de 64 píxeles
 
         const spriteMat = new THREE.SpriteMaterial({ map: spritesheetTexture, transparent: true });
         const jugadorSprite = new THREE.Sprite(spriteMat);
         jugadorSprite.scale.set(2, 4, 1);
 
         const jugadorNode = new THREE.Group();
-        jugadorNode.position.set(0, 5, 0);
+        jugadorNode.position.set(0, 4, 0);
         jugadorNode.add(jugadorSprite);
         scene.add(jugadorNode);
 
-        // 5. SISTEMA DE PERIFÉRICOS (MOUSE LOOK + TECLADO)
+        // 6. CONTROLADORES DE ENTRADA Y POINTER LOCK
         const teclas = { w: false, a: false, s: false, d: false };
-        let mouseCamara = { horizontal: 0, vertical: 0.3 }; // Ángulos de orientación orbital
+        let mouseCamara = { horizontal: 0, vertical: 0.25 };
 
         const divBloqueo = document.getElementById('bloqueo-pantalla');
         
-        // Al dar clic se captura el cursor del sistema
-        window.addEventListener('click', () => {
-            document.body.requestPointerLock();
-        });
+        window.addEventListener('click', () => { document.body.requestPointerLock(); });
 
         document.addEventListener('pointerlockchange', () => {
             if (document.pointerLockElement === document.body) {
@@ -284,24 +340,21 @@
             }
         });
 
-        // Captura del movimiento delta del ratón
         window.addEventListener('mousemove', (e) => {
             if (document.pointerLockElement === document.body) {
-                mouseCamara.horizontal -= e.movementX * 0.003;
-                mouseCamara.vertical -= e.movementY * 0.003;
-                // Límites verticales para que no se voltee la cámara de cabeza
-                mouseCamara.vertical = Math.max(0.05, Math.min(Math.PI / 2.5, mouseCamara.vertical));
+                mouseCamara.horizontal -= e.movementX * 0.0035;
+                mouseCamara.vertical -= e.movementY * 0.0035;
+                mouseCamara.vertical = Math.max(0.05, Math.min(Math.PI / 2.6, mouseCamara.vertical));
             }
         });
 
         window.addEventListener('keydown', (e) => { if (teclas.hasOwnProperty(e.key.toLowerCase())) teclas[e.key.toLowerCase()] = true; });
         window.addEventListener('keyup', (e) => { if (teclas.hasOwnProperty(e.key.toLowerCase())) teclas[e.key.toLowerCase()] = false; });
 
-        // Variables de Control Dinámico
-        const velocidad = 0.22;
+        const velocidad = 0.2;
         let cronometroAnim = 0;
 
-        // 6. LOOP DE ITERACIÓN CONTINUA
+        // 7. BUCLE DINÁMICO DE RENDER
         function animate() {
             requestAnimationFrame(animate);
 
@@ -309,17 +362,13 @@
             let camaraFrente = new THREE.Vector3();
             let camaraDerecha = new THREE.Vector3();
 
-            // Obtener el vector de dirección frontal de la cámara en el plano plano XZ
             camera.getWorldDirection(camaraFrente);
             camaraFrente.y = 0;
             camaraFrente.normalize();
-
-            // Obtener el vector derecho de la cámara
             camaraDerecha.crossVectors(camaraFrente, camera.up).normalize().negate();
 
             let estaCaminando = false;
 
-            // Ensamblar vector de movimiento relativo a la vista actual
             if (teclas.w) { vectorDireccion.add(camaraFrente); estaCaminando = true; }
             if (teclas.s) { vectorDireccion.add(camaraFrente.clone().negate()); estaCaminando = true; }
             if (teclas.a) { vectorDireccion.add(camaraDerecha.clone().negate()); estaCaminando = true; }
@@ -329,57 +378,46 @@
                 vectorDireccion.normalize();
                 jugadorNode.position.addScaledVector(vectorDireccion, velocidad);
 
-                // Voltear el espejo del Sprite dependiendo de la dirección del movimiento lateral relativo
                 const proyeccionLateral = vectorDireccion.dot(camaraDerecha);
-                if (proyeccionLateral < -0.1) jugadorSprite.scale.x = -2; // Izquierda
-                if (proyeccionLateral > 0.1) jugadorSprite.scale.x = 2;   // Derecha
+                if (proyeccionLateral < -0.1) jugadorSprite.scale.x = -2; // Espejo a la izquierda
+                if (proyeccionLateral > 0.1) jugadorSprite.scale.x = 2;   // Vista normal a la derecha
             }
 
-            // Ajustar altura al suelo geométrico
+            // Fijación de físicas de relieve al suelo plano / colinas / lagos
             const hSuelo = obtenerAlturaTerreno(jugadorNode.position.x, jugadorNode.position.z);
-            const nivelFisico = Math.max(hSuelo, -3.0);
+            const nivelFisico = Math.max(hSuelo, -1.2); // Colisión física con la superficie del agua/fondos
             jugadorNode.position.y = nivelFisico + 2.0;
 
-            // --- MOTOR DE CONTROL DE FOTOGRAMAS (ANIMACIÓN SPRITESHEET) ---
-            cronometroAnim += 0.12;
+            // --- ANIMACIÓN DE FOTOGRAMAS SPRITESHEET PIXEL-ART ---
+            cronometroAnim += 0.14;
             if (estaCaminando) {
-                // Alterna rítmicamente entre el cuadro 1 (Offset 1/3) y el cuadro 2 (Offset 2/3)
-                let cuadroActual = Math.floor(cronometroAnim % 2) + 1; 
-                spritesheetTexture.offset.x = cuadroActual / 3;
-                
-                // Efecto extra: rebote sutil al caminar
-                jugadorSprite.position.y = Math.abs(Math.sin(cronometroAnim * 1.2)) * 0.12;
+                // Alterna entre el frame 1 (offset x = 1/3) y el frame 2 (offset x = 2/3) de la imagen virtual
+                let frameId = Math.floor(cronometroAnim % 2) + 1;
+                spritesheetTexture.offset.x = frameId / 3;
+                jugadorSprite.position.y = Math.abs(Math.sin(cronometroAnim * 1.5)) * 0.08; // Pequeño bamboleo al andar
             } else {
-                // Cuadro 0 (Offset 0.0) cuando está quieto
+                // Frame 0 estático
                 spritesheetTexture.offset.x = 0.0;
-                // Efecto de respiración estática fluida
-                jugadorSprite.position.y = Math.sin(cronometroAnim * 0.2) * 0.04;
+                jugadorSprite.position.y = Math.sin(cronometroAnim * 0.25) * 0.03; // Respiración sutil
             }
 
-            // Movimiento sinoidal estético del lago
-            lago.position.y = -3.0 + Math.sin(cronometroAnim * 0.1) * 0.04;
-
-            // CALCULO DE POSICIÓN ORBITAL DE LA CÁMARA (TERCERA PERSONA POR RATÓN)
-            const radioCamara = 12; // Distancia fija al personaje
-            
+            // ÓRBITA SUAVE DE CÁMARA CON MOUSE LOOK
+            const radioCamara = 11;
             const objetivoCamaraX = jugadorNode.position.x + radioCamara * Math.sin(mouseCamara.horizontal) * Math.cos(mouseCamara.vertical);
             const objetivoCamaraY = jugadorNode.position.y + radioCamara * Math.sin(mouseCamara.vertical);
             const objetivoCamaraZ = jugadorNode.position.z + radioCamara * Math.cos(mouseCamara.horizontal) * Math.cos(mouseCamara.vertical);
 
-            // Interpolación suavizada (Lerp) para evitar tirones en la cámara
-            camera.position.x += (objetivoCamaraX - camera.position.x) * 0.08;
-            camera.position.y += (objetivoCamaraY - camera.position.y) * 0.08;
-            camera.position.z += (objetivoCamaraZ - camera.position.z) * 0.08;
+            camera.position.x += (objetivoCamaraX - camera.position.x) * 0.09;
+            camera.position.y += (objetivoCamaraY - camera.position.y) * 0.09;
+            camera.position.z += (objetivoCamaraZ - camera.position.z) * 0.09;
             
-            // Forzar a la cámara a apuntar al centro de masa del personaje humanoide
-            camera.lookAt(jugadorNode.position.x, jugadorNode.position.y, jugadorNode.position.z);
+            camera.lookAt(jugadorNode.position.x, jugadorNode.position.y + 0.5, jugadorNode.position.z);
 
             renderer.render(scene, camera);
         }
 
         animate();
 
-        // Soporte Responsive adaptativo
         window.addEventListener('resize', () => {
             camera.aspect = window.innerWidth / window.innerHeight;
             camera.updateProjectionMatrix();
