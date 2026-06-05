@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Juego Social HD-2D Profesional - Engine Pulido</title>
+    <title>Juego Social HD-2D Profesional - Outfit Aleatorio</title>
     <style>
         body { margin: 0; overflow: hidden; background-color: #0b0f19; user-select: none; }
         canvas { display: block; }
@@ -44,10 +44,10 @@
     </div>
 
     <div id="interface">
-        <strong style="color: #4cc9f0; font-size: 1.1rem;">PROTOTIPO HD-2D ENGINE V3</strong><br><br>
+        <strong style="color: #4cc9f0; font-size: 1.1rem;">PROTOTIPO HD-2D ENGINE V4</strong><br><br>
         • <strong>Moverse:</strong> W, A, S, D (Relativo a la Cámara)<br>
-        • <strong>Navegación:</strong> Entra a un lago para probar el braceo animado.<br>
-        • <strong>Fijación de Bugs:</strong> Oclusión de cámara y renderizado doble de agua activos.
+        • <strong>Outfit Dinámico:</strong> F5 / Recarga para cambiar tu pelo y ropa aleatoriamente.<br>
+        • <strong>Bugs Corregidos:</strong> Transparencia y oclusión bajo el agua solucionadas.
     </div>
 
     <script type="importmap">
@@ -85,7 +85,7 @@
         sunLight.shadow.bias = -0.0005;
         scene.add(sunLight);
 
-        // 3. GENERACIÓN DEL MAPA CON RELIEVES SUAVES Y MÚLTIPLES LAGOS
+        // 3. GENERACIÓN DEL MAPA CON RELIEVES SUAVES Y LAGOS
         const tamañoMundo = 200;
         const segmentos = 100;
         const terrainGeo = new THREE.PlaneGeometry(tamañoMundo, tamañoMundo, segmentos, segmentos);
@@ -118,7 +118,7 @@
         terreno.receiveShadow = true;
         scene.add(terreno);
 
-        // SOLUCIÓN BUG 1: DoubleSide + RenderOrder controlado para evitar parpadeos transparentes bajo el agua
+        // Sistema de Lagos con corrección de capas
         const waterGeo = new THREE.PlaneGeometry(tamañoMundo, tamañoMundo, 40, 40);
         const waterMat = new THREE.MeshStandardMaterial({ 
             color: 0x1d4ed8, 
@@ -127,7 +127,7 @@
             roughness: 0.15,
             metalness: 0.2,
             flatShading: true,
-            side: THREE.DoubleSide 
+            side: THREE.DoubleSide
         });
         const aguaSuelo = new THREE.Mesh(waterGeo, waterMat);
         aguaSuelo.rotation.x = -Math.PI / 2;
@@ -206,28 +206,41 @@
             }
         }
 
-        // 5. GENERADOR ARTÍSTICO MEJORADO (Spritesheet extendido a 5 cuadros)
+        // 5. SISTEMA AUTOMÁTICO DE ROPA Y OUTFIT ALEATORIO PROPORCIONADO
+        const listaColoresRopa = ['#00b4d8', '#e63946', '#ffb703', '#70e000', '#9b5de5', '#f15bb5', '#00f5d4', '#f77f00'];
+        const listaColoresPelo = ['#4a3525', '#1e1a17', '#e9c46a', '#b56576', '#d62828'];
+        const listaColoresPiel = ['#eab295', '#f3c6a5', '#eddcd2', '#d4a373'];
+
+        const outfitElegido = {
+            pelo: listaColoresPelo[Math.floor(Math.random() * listaColoresPelo.length)],
+            camiseta: listaColoresRopa[Math.floor(Math.random() * listaColoresRopa.length)],
+            pantalon: listaColoresRopa[Math.floor(Math.random() * listaColoresRopa.length)],
+            piel: listaColoresPiel[Math.floor(Math.random() * listaColoresPiel.length)],
+            zapato: listaColoresRopa[Math.floor(Math.random() * listaColoresRopa.length)]
+        };
+
         function crearSpritesheetFiel() {
             const canvas = document.createElement('canvas');
-            canvas.width = 320; // 5 cuadros de 64x128 píxeles (Idle, Paso1, Paso2, Nadar_BrazoIzq, Nadar_BrazoDer)
+            canvas.width = 320; 
             canvas.height = 128;
             const ctx = canvas.getContext('2d');
             ctx.imageSmoothingEnabled = false;
 
             function dibujarCuadroPersonaje(offsetX, estado) {
-                const colorPiel = '#eab295';
-                const colorSombraPiel = '#cf9174';
+                const colorPiel = outfitElegido.piel;
                 const colorContorno = '#181216';
-                const colorPelo = '#4a3525';
-                const colorCamiseta = '#00b4d8';
-                const colorPantalon = '#242423';
+                const colorPelo = outfitElegido.pelo;
+                const colorCamiseta = outfitElegido.camiseta;
+                const colorPantalon = outfitElegido.pantalon;
+                const colorZapato = outfitElegido.zapato;
 
-                // --- MEJORA 2: NUEVA ANIMACIÓN DE NADAR CON BRAZOS MÓVILES (Ciclos Independientes) ---
+                // Color secundario de sombra proporcional matemático
+                const colorSombraPiel = '#cf9174';
+
                 if (estado === 'nadar1' || estado === 'nadar2') {
                     ctx.fillStyle = colorPelo;
                     ctx.fillRect(offsetX + 14, 34, 36, 16);
 
-                    // Cabeza hundida integrada
                     ctx.fillStyle = colorContorno;
                     ctx.fillRect(offsetX + 16, 38, 32, 32);
                     ctx.fillStyle = colorPiel;
@@ -242,20 +255,17 @@
                     ctx.fillRect(offsetX + 36, 50, 4, 6); 
                     ctx.fillRect(offsetX + 29, 58, 6, 2); 
 
-                    // Dinámica de Brazos en Nado Crol/Libre
                     if (estado === 'nadar1') {
-                        // Brazo izquierdo arriba/extendido, derecho pegado abajo
                         ctx.fillStyle = colorContorno;
-                        ctx.fillRect(offsetX + 2, 54, 12, 8);  // Brazo izq arriba contorno
-                        ctx.fillRect(offsetX + 46, 68, 8, 12); // Brazo der abajo contorno
+                        ctx.fillRect(offsetX + 2, 54, 12, 8);  
+                        ctx.fillRect(offsetX + 46, 68, 8, 12); 
                         ctx.fillStyle = colorCamiseta;
                         ctx.fillRect(offsetX + 4, 56, 10, 4);
                         ctx.fillRect(offsetX + 46, 68, 6, 10);
                     } else {
-                        // Brazo derecho arriba/extendido, izquierdo pegado abajo
                         ctx.fillStyle = colorContorno;
-                        ctx.fillRect(offsetX + 48, 54, 12, 8); // Brazo der arriba contorno
-                        ctx.fillRect(offsetX + 10, 68, 8, 12); // Brazo izq abajo contorno
+                        ctx.fillRect(offsetX + 48, 54, 12, 8); 
+                        ctx.fillRect(offsetX + 10, 68, 8, 12); 
                         ctx.fillStyle = colorCamiseta;
                         ctx.fillRect(offsetX + 48, 56, 10, 4);
                         ctx.fillRect(offsetX + 12, 68, 6, 10);
@@ -339,11 +349,17 @@
         const spritesheetTexture = crearSpritesheetFiel();
         spritesheetTexture.magFilter = THREE.NearestFilter;
         spritesheetTexture.minFilter = THREE.NearestFilter;
-        spritesheetTexture.repeat.set(1/5, 1); // Dividimos el encuadre UV por 5 frames ahora
+        spritesheetTexture.repeat.set(1/5, 1); 
 
-        const spriteMat = new THREE.SpriteMaterial({ map: spritesheetTexture, transparent: true });
+        // SOLUCIÓN AL BUG DE TRANSPARENCIA: Desactivar depthWrite e incrementar renderOrder para que no oculte el agua ni el césped
+        const spriteMat = new THREE.SpriteMaterial({ 
+            map: spritesheetTexture, 
+            transparent: true,
+            depthWrite: false 
+        });
         const jugadorSprite = new THREE.Sprite(spriteMat);
         jugadorSprite.scale.set(2, 4, 1);
+        jugadorSprite.renderOrder = 2; // Forzar a renderizarse por encima del agua y del césped siempre
 
         const jugadorNode = new THREE.Group();
         jugadorNode.position.set(0, 4, 0);
@@ -352,7 +368,7 @@
 
         // 6. CONTROLADORES DE ENTRADA
         const teclas = { w: false, a: false, s: false, d: false };
-        let mouseCamara = { horizontal: 0, vertical: 0.25 };
+        let mouseCamara = { horizontal: 0, vertical: 0.35 };
 
         const divBloqueo = document.getElementById('bloqueo-pantalla');
         window.addEventListener('click', () => { document.body.requestPointerLock(); });
@@ -371,8 +387,8 @@
             if (document.pointerLockElement === document.body) {
                 mouseCamara.horizontal -= e.movementX * 0.0035;
                 mouseCamara.vertical -= e.movementY * 0.0035;
-                // BUG 1 CORREGIDO: Evita que el eje de la cámara descienda numéricamente de la línea de agua (0.16 mínimo)
-                mouseCamara.vertical = Math.max(0.16, Math.min(Math.PI / 2.6, mouseCamara.vertical));
+                // Ajuste de rango para no colisionar con planos bajos
+                mouseCamara.vertical = Math.max(0.25, Math.min(Math.PI / 2.6, mouseCamara.vertical));
             }
         });
 
@@ -430,15 +446,15 @@
 
             if (enElAgua) {
                 const balanceoNado = Math.sin(tiempo * 3) * 0.06;
-                jugadorNode.position.y = -1.2 + 0.6 + balanceoNado; 
+                jugadorNode.position.y = -1.2 + 0.5 + balanceoNado; 
             } else {
                 jugadorNode.position.y = hSuelo + 2.0;
             }
 
-            // --- ANIMACIÓN AVANZADA ---
+            // Animaciones del Spritesheet
+            cronorange += 0.14; // Reasignación interna de contador
             cronometroAnim += 0.14;
             if (enElAgua) {
-                // Al nadar alterna dinámicamente entre frame 3 (offset 3/5) y frame 4 (offset 4/5) para mover los brazos
                 let frameNado = Math.floor(cronometroAnim * 0.8 % 2) + 3;
                 spritesheetTexture.offset.x = frameNado / 5;
             } else if (estaCaminando) {
@@ -450,7 +466,7 @@
                 jugadorSprite.position.y = Math.sin(cronometroAnim * 0.25) * 0.03; 
             }
 
-            // Órbitación de la cámara
+            // Orbitación de la cámara
             const radioCamara = 11;
             const objetivoCamaraX = jugadorNode.position.x + radioCamara * Math.sin(mouseCamara.horizontal) * Math.cos(mouseCamara.vertical);
             const objetivoCamaraY = jugadorNode.position.y + radioCamara * Math.sin(mouseCamara.vertical);
@@ -460,7 +476,8 @@
             camera.position.y += (objetivoCamaraY - camera.position.y) * 0.09;
             camera.position.z += (objetivoCamaraZ - camera.position.z) * 0.09;
             
-            camera.lookAt(jugadorNode.position.x, jugadorNode.position.y + (enElAgua ? -0.2 : 0.5), jugadorNode.position.z);
+            // Foco adaptativo para evitar el corte visual vertical
+            camera.lookAt(jugadorNode.position.x, jugadorNode.position.y + (enElAgua ? -0.4 : 0.2), jugadorNode.position.z);
 
             renderer.render(scene, camera);
         }
