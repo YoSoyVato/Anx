@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Juego Social HD-2D Profesional - Estable</title>
+    <title>Juego Social HD-2D Profesional - Modo Multijugador Real</title>
     <style>
         body { margin: 0; overflow: hidden; background-color: #0b0f19; user-select: none; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         canvas { display: block; }
@@ -70,23 +70,6 @@
         }
         .tab-btn:hover { background: #4cc9f0; color: #0b0f19; }
         .tab-btn.activo { background: #e63946; }
-        
-        #lista-jugadores {
-            max-height: 120px;
-            overflow-y: auto;
-            background: rgba(0,0,0,0.3);
-            border-radius: 6px;
-            padding: 5px;
-        }
-        .item-jugador {
-            padding: 8px;
-            border-bottom: 1px solid rgba(255,255,255,0.05);
-            cursor: pointer;
-            font-size: 0.9rem;
-            display: flex;
-            justify-content: space-between;
-        }
-        .item-jugador:hover { background: rgba(76, 201, 240, 0.2); }
 
         #contenedor-chat {
             position: absolute;
@@ -139,6 +122,22 @@
             display: block;
             width: 0;
         }
+        
+        #prompt-interaccion {
+            position: absolute;
+            bottom: 20%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.8);
+            color: #4cc9f0;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-weight: bold;
+            border: 1px solid #4cc9f0;
+            display: none;
+            pointer-events: none;
+            z-index: 30;
+        }
     </style>
 </head>
 <body>
@@ -148,22 +147,18 @@
     </div>
 
     <div id="interface">
-        <strong style="color: #4cc9f0; font-size: 1.1rem;">PROTOTIPO HD-2D ENGINE V5.1</strong><br><br>
+        <strong style="color: #4cc9f0; font-size: 1.1rem;">PROTOTIPO HD-2D ENGINE V5.2</strong><br><br>
         • <strong>Moverse:</strong> W, A, S, D<br>
-        • <strong>Chat Cercano:</strong> Presiona <strong style="color: #ffb703;">T</strong> para hablar.<br>
-        • <strong>Panel Propietario:</strong> Presiona <strong style="color: #ffb703;">TAB</strong> para abrir el menú de la casa.<br>
-        • <strong>Casas de Servidor:</strong> Sólo se cargan las casas de los jugadores conectados.
+        • <strong>Chat de Voz/Texto:</strong> Presiona <strong style="color: #ffb703;">T</strong> para hablar.<br>
+        • <strong>Entrar a Casas:</strong> Haz <strong style="color: #ffb703;">Click Izquierdo</strong> cerca de la puerta para abrirla.<br>
+        • <strong>Modo Servidor:</strong> Sin bots. Solo tu casa activa (Spawn listo para WebSocket).
     </div>
+
+    <div id="prompt-interaccion">🖱️ Haz Click para abrir/cerrar la puerta</div>
 
     <div id="menu-tab">
         <div class="tab-titulo">⚙️ PANEL DE TU PROPIEDAD</div>
-        <div id="btn-cerradura" class="tab-btn">ESTADO: TU CASA ABIERTA</div>
-        
-        <div style="border-top: 1px solid rgba(255,255,255,0.1); margin: 5px 0;"></div>
-        
-        <div class="tab-titulo" style="color: #ffb703;">🎉 ORGANIZAR FIESTA</div>
-        <div style="font-size: 0.85rem; text-align: center; opacity: 0.7;">Selecciona un usuario del servidor para invitarlo:</div>
-        <div id="lista-jugadores"></div>
+        <div id="btn-cerradura" class="tab-btn">CERRADURA CENTRAL INTERNA</div>
     </div>
 
     <div id="contenedor-chat">
@@ -255,11 +250,11 @@
 
         const posicionOriginalAgua = waterGeo.attributes.position.clone();
 
-        // CONTROLADORES GLOBALES DE PROPIEDADES DE CASAS
-        let casaCerrada = false; 
+        // CONTROLADORES DE INFRAESTRUCTURA REAL
         const arrayCasasEstructura = []; 
+        const promptInteract = document.getElementById('prompt-interaccion');
 
-        // 4. GENERACIÓN DE ENTIDADES AMBIENTALES (140 ÁRBOLES)
+        // GENERACIÓN DE ENTIDADES AMBIENTALES (140 ÁRBOLES)
         for (let i = 0; i < 140; i++) { 
             const x = (Math.random() - 0.5) * 150;
             const z = (Math.random() - 0.5) * 150;
@@ -277,25 +272,25 @@
         }
 
         // --- CONSTRUCTOR PROCEDURAL DE CASAS CON INTERIOR ---
-        const crearCasitaConInterior = (x, z, h, esPropia = false) => {
+        const crearCasitaConInterior = (x, z, h) => {
             const casa = new THREE.Group();
 
-            // 1. Suelo interno de madera
+            // Suelo interno
             const sueloIntGeo = new THREE.BoxGeometry(2.8, 0.1, 2.8);
-            const sueloIntMat = new THREE.MeshStandardMaterial({ color: esPropia ? 0x8e5531 : 0x5c3d24, roughness: 0.5 });
+            const sueloIntMat = new THREE.MeshStandardMaterial({ color: 0x8e5531, roughness: 0.5 });
             const sueloInt = new THREE.Mesh(sueloIntGeo, sueloIntMat);
             sueloInt.position.y = 0.05;
             sueloInt.receiveShadow = true;
             casa.add(sueloInt);
 
-            // Alfombra interior
+            // Alfombra
             const alfombraGeo = new THREE.BoxGeometry(1.4, 0.02, 1.4);
-            const alfombraMat = new THREE.MeshStandardMaterial({ color: esPropia ? 0xb7094c : 0x005f73, roughness: 0.9 });
+            const alfombraMat = new THREE.MeshStandardMaterial({ color: 0xb7094c, roughness: 0.9 });
             const alfombra = new THREE.Mesh(alfombraGeo, alfombraMat);
             alfombra.position.set(0, 0.11, 0);
             casa.add(alfombra);
 
-            // 2. Paredes
+            // Paredes
             const matPared = new THREE.MeshStandardMaterial({ color: 0xf4f1de, roughness: 0.8, flatShading: true });
             
             const paredTrasera = new THREE.Mesh(new THREE.BoxGeometry(3, 2.5, 0.1), matPared);
@@ -321,7 +316,7 @@
 
             // Techo
             const techoGeo = new THREE.ConeGeometry(2.6, 1.8, 4);
-            const techoMat = new THREE.MeshStandardMaterial({ color: esPropia ? 0xe07a5f : 0x2a9d8f, roughness: 0.7, flatShading: true });
+            const techoMat = new THREE.MeshStandardMaterial({ color: 0xe07a5f, roughness: 0.7, flatShading: true });
             const techo = new THREE.Mesh(techoGeo, techoMat);
             techo.position.y = 2.5 + 0.4;
             techo.rotation.y = Math.PI / 4; 
@@ -331,36 +326,18 @@
             casa.position.set(x, h, z);
             scene.add(casa);
 
-            // Guardar datos físicos para colisiones relativas
-            arrayCasasEstructura.push({ x: x, z: z, h: h, esPropia: esPropia });
+            // Registro de datos físicos e interactivos de la casa
+            arrayCasasEstructura.push({ 
+                x: x, 
+                z: z, 
+                h: h, 
+                puertaAbierta: false // Bloqueada por defecto hasta interactuar con click
+            });
         };
 
-        // --- SOLUCIÓN MECÁNICA 2: CONTROL DE CASAS DE JUGADORES CONECTADOS ---
-        // Generar TU casa única en tu zona de spawn
-        crearCasitaConInterior(8, 8, obtenerAlturaTerreno(8, 8), true);
+        // --- SOLUCIÓN NO BOTS: ÚNICAMENTE TU CASA REAL ---
+        crearCasitaConInterior(8, 8, obtenerAlturaTerreno(8, 8));
 
-        // Generar una casa SOLO para los jugadores concurrentes conectados en el servidor simulado
-        const nombresFakeServer = ["PixelMaster", "Luna_2D", "Niko_HD", "GamerSocial", "ZeldaHD2D", "Rex_Builder"];
-        
-        nombresFakeServer.forEach((nombre, index) => {
-            // Posiciones únicas basadas en su ID de red ficticia para que aparezcan dispersos
-            const xPos = -40 + (index * 15) + (Math.sin(index) * 10);
-            const zPos = -30 + (index * 12) + (Math.cos(index) * 10);
-            const hPos = obtenerAlturaTerreno(xPos, zPos);
-            
-            if (hPos > 0.5) {
-                crearCasitaConInterior(xPos, zPos, hPos, false);
-            }
-        });
-
-        // Generar la lista visual en el menú TAB
-        const contenedorLista = document.getElementById('lista-jugadores');
-        nombresFakeServer.forEach(nombre => {
-            const div = document.createElement('div'); div.className = 'item-jugador';
-            div.innerHTML = `<span>👤 ${nombre}</span> <span style="color:#4cc9f0; font-weight:bold;">Invitar</span>`;
-            div.onclick = () => invitarJugadorAFiesta(nombre);
-            contenedorLista.appendChild(div);
-        });
 
         // 5. SISTEMA DE GENERACIÓN DE OUTFIT PROCEDURAL
         const listaColoresRopa = ['#00b4d8', '#e63946', '#ffb703', '#70e000', '#9b5de5', '#f15bb5', '#00f5d4', '#f77f00'];
@@ -444,6 +421,23 @@
         const inpChat = document.getElementById('input-chat');
         const mTab = document.getElementById('menu-tab');
 
+        // --- EXCLUSIVO MECÁNICA 2: DETECCIÓN DE INTERACCIÓN DE RATÓN POR CLICK ---
+        window.addEventListener('mousedown', (e) => {
+            if (document.pointerLockElement !== document.body || chatAbierto || menuTabAbierto) return;
+            
+            // Si el jugador hace click izquierdo (e.button === 0)
+            if (e.button === 0) {
+                arrayCasasEstructura.forEach(casa => {
+                    const distADoor = Math.sqrt(Math.pow(jugadorNode.position.x - casa.x, 2) + Math.pow(jugadorNode.position.z - (casa.z + 1.45), 2));
+                    // Si está en el rango perimetral del umbral de entrada (distancia de interacción < 2.5 unidades)
+                    if (distADoor < 2.5) {
+                        casa.puertaAbierta = !casa.puertaAbierta;
+                        crearBurbujaDeTexto(jugadorNode.position, casa.puertaAbierta ? "🚪 Puerta abierta" : "🔒 Puerta cerrada", true);
+                    }
+                });
+            }
+        });
+
         window.addEventListener('click', () => { 
             if (!chatAbierto && !menuTabAbierto) document.body.requestPointerLock(); 
         });
@@ -492,12 +486,6 @@
             const msg = inpChat.value.trim();
             if(msg !== "") {
                 crearBurbujaDeTexto(jugadorNode.position, msg, true);
-                setTimeout(() => {
-                    if(Math.random() > 0.4) {
-                        let posFalsa = jugadorNode.position.clone().add(new THREE.Vector3((Math.random()-0.5)*12, 0, (Math.random()-0.5)*12));
-                        crearBurbujaDeTexto(posFalsa, "¡Hola! Qué buena onda tu casa.", false);
-                    }
-                }, 1500);
             }
             cerrarChat();
         }
@@ -524,57 +512,6 @@
             } else {
                 mTab.style.display = 'none'; document.body.requestPointerLock();
             }
-        }
-
-        const btnCerradura = document.getElementById('btn-cerradura');
-        btnCerradura.onclick = () => {
-            casaCerrada = !casaCerrada;
-            if (casaCerrada) {
-                btnCerradura.innerText = "ESTADO: TU CASA CERRADA"; btnCerradura.classList.add('activo');
-            } else {
-                btnCerradura.innerText = "ESTADO: TU CASA ABIERTA"; btnCerradura.classList.remove('activo');
-            }
-        };
-
-        function invitarJugadorAFiesta(nombre) {
-            toggleMenuTab();
-            crearBurbujaDeTexto(jugadorNode.position, `¡Atención! Creé una fiesta e invité a ${nombre}! 🎉`, true);
-            for(let i=0; i<15; i++) {
-                setTimeout(() => crearEfectoFuegoArtificial(), i * 250);
-            }
-        }
-
-        function crearEfectoFuegoArtificial() {
-            const pGeo = new THREE.BufferGeometry();
-            const pCount = 40; const coords = [];
-            const x = jugadorNode.position.x + (Math.random()-0.5)*15;
-            const y = jugadorNode.position.y + 4 + Math.random()*5;
-            const z = jugadorNode.position.z + (Math.random()-0.5)*15;
-            
-            for(let i=0; i<pCount; i++) coords.push(x, y, z);
-            pGeo.setAttribute('position', new THREE.Float32BufferAttribute(coords, 3));
-            
-            const pMat = new THREE.PointsMaterial({
-                color: listaColoresRopa[Math.floor(Math.random()*listaColoresRopa.length)],
-                size: 0.3, transparent: true, opacity: 1.0
-            });
-            const particles = new THREE.Points(pGeo, pMat); scene.add(particles);
-
-            let tExp = 0;
-            const vels = Array.from({length: pCount}, () => new THREE.Vector3((Math.random()-0.5)*0.3, (Math.random()-0.5)*0.3, (Math.random()-0.5)*0.3));
-            
-            function animParticulas() {
-                tExp++;
-                const pPos = particles.geometry.attributes.position;
-                for(let i=0; i<pCount; i++) {
-                    pPos.setX(i, pPos.getX(i) + vels[i].x);
-                    pPos.setY(i, pPos.getY(i) + vels[i].y);
-                    pPos.setZ(i, pPos.getZ(i) + vels[i].z);
-                }
-                pPos.needsUpdate = true; pMat.opacity -= 0.02;
-                if(tExp < 50) { requestAnimationFrame(animParticulas); } else { scene.remove(particles); pGeo.dispose(); pMat.dispose(); }
-            }
-            animParticulas();
         }
 
         let cronometroAnim = 0;
@@ -616,30 +553,40 @@
                 if (vectorDireccion.dot(camaraDerecha) > 0.1) jugadorSprite.scale.x = 2;   
             }
 
-            // --- MOTOR DE COLISIONES OPTIMIZADO Y FILTRADO POR DUEÑO ---
+            // --- MOTOR DE COLISIONES REALES CON FILTRADO DE CLICK DE PUERTA ---
             let hSuelo = obtenerAlturaTerreno(jugadorNode.position.x, jugadorNode.position.z);
-            
+            let mostrarPromptUI = false;
+
             arrayCasasEstructura.forEach(casa => {
-                const dist = Math.sqrt(Math.pow(jugadorNode.position.x - casa.x, 2) + Math.pow(jugadorNode.position.z - casa.z, 2));
-                if (dist < 1.6) {
+                const distPerimetro = Math.sqrt(Math.pow(jugadorNode.position.x - casa.x, 2) + Math.pow(jugadorNode.position.z - casa.z, 2));
+                const distADoor = Math.sqrt(Math.pow(jugadorNode.position.x - casa.x, 2) + Math.pow(jugadorNode.position.z - (casa.z + 1.45), 2));
+                
+                // Mostrar UI informativa si el jugador está parado frente a la puerta
+                if (distADoor < 2.2) {
+                    mostrarPromptUI = true;
+                }
+
+                if (distPerimetro < 1.6) {
                     const relX = jugadorNode.position.x - casa.x;
                     const relZ = jugadorNode.position.z - casa.z;
                     
-                    // Comprobar si el estado de bloqueo afecta a la casa consultada
-                    const estaBloqueada = casa.esPropia ? casaCerrada : false;
-                    
-                    if (relZ > 1.2 && Math.abs(relX) < 0.4 && !estaBloqueada) {
+                    // Condición de entrada: Cruza únicamente si la puerta está marcada como abierta por un Click
+                    if (relZ > 1.2 && Math.abs(relX) < 0.4 && casa.puertaAbierta) {
                         hSuelo = casa.h;
                     } else {
-                        if (Math.abs(relX) > 1.3 || relZ < -1.3 || relZ > 1.3 || (Math.abs(relX) > 0.3 && relZ > 1.2) || estaBloqueada) {
+                        // Si está bloqueada o choca con los muros laterales, frena el movimiento
+                        if (Math.abs(relX) > 1.3 || relZ < -1.3 || relZ > 1.3 || (Math.abs(relX) > 0.3 && relZ > 1.2) || !casa.puertaAbierta) {
                             jugadorNode.position.x = viejaX;
                             jugadorNode.position.z = viejaZ;
                         } else {
-                            hSuelo = casa.h;
+                            hSuelo = casa.h; // Está adentro pisando la madera
                         }
                     }
                 }
             });
+
+            // Visibilidad del prompt flotante HUD de interacción
+            promptInteract.style.display = mostrarPromptUI ? 'block' : 'none';
 
             const enElAgua = hSuelo < -1.2; 
             if (enElAgua) {
@@ -648,7 +595,7 @@
                 jugadorNode.position.y = hSuelo + 2.0; waterMat.opacity = 0.70;
             }
 
-            // --- CORRECCIÓN INTEGRAL DE LA ANIMACIÓN FANTASMA ---
+            // Gestión de Animación de Spritesheets
             cronometroAnim += 0.14;
             if (enElAgua) {
                 spritesheetTexture.offset.x = (Math.floor(cronometroAnim * 0.8 % 2) + 3) / 5;
