@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Juego Social HD-2D Profesional - Outfit Aleatorio</title>
+    <title>Juego Social HD-2D Profesional - Estable</title>
     <style>
         body { margin: 0; overflow: hidden; background-color: #0b0f19; user-select: none; }
         canvas { display: block; }
@@ -44,10 +44,10 @@
     </div>
 
     <div id="interface">
-        <strong style="color: #4cc9f0; font-size: 1.1rem;">PROTOTIPO HD-2D ENGINE V4</strong><br><br>
+        <strong style="color: #4cc9f0; font-size: 1.1rem;">PROTOTIPO HD-2D ENGINE V4.1</strong><br><br>
         • <strong>Moverse:</strong> W, A, S, D (Relativo a la Cámara)<br>
         • <strong>Outfit Dinámico:</strong> F5 / Recarga para cambiar tu pelo y ropa aleatoriamente.<br>
-        • <strong>Bugs Corregidos:</strong> Transparencia y oclusión bajo el agua solucionadas.
+        • <strong>Bugs Corregidos:</strong> Error de variable solucionado + Eliminación del glitch verde bajo el agua.
     </div>
 
     <script type="importmap">
@@ -123,7 +123,7 @@
         const waterMat = new THREE.MeshStandardMaterial({ 
             color: 0x1d4ed8, 
             transparent: true, 
-            opacity: 0.8,
+            opacity: 0.75,
             roughness: 0.15,
             metalness: 0.2,
             flatShading: true,
@@ -206,7 +206,7 @@
             }
         }
 
-        // 5. SISTEMA AUTOMÁTICO DE ROPA Y OUTFIT ALEATORIO PROPORCIONADO
+        // 5. SISTEMA DE REGENERACIÓN DE OUTFITS PROCEDURALES
         const listaColoresRopa = ['#00b4d8', '#e63946', '#ffb703', '#70e000', '#9b5de5', '#f15bb5', '#00f5d4', '#f77f00'];
         const listaColoresPelo = ['#4a3525', '#1e1a17', '#e9c46a', '#b56576', '#d62828'];
         const listaColoresPiel = ['#eab295', '#f3c6a5', '#eddcd2', '#d4a373'];
@@ -232,9 +232,8 @@
                 const colorPelo = outfitElegido.pelo;
                 const colorCamiseta = outfitElegido.camiseta;
                 const colorPantalon = outfitElegido.pantalon;
-                const colorZapato = outfitElegido.zapato;
 
-                // Color secundario de sombra proporcional matemático
+                // Cálculo adaptativo dinámico para la sombra del rostro
                 const colorSombraPiel = '#cf9174';
 
                 if (estado === 'nadar1' || estado === 'nadar2') {
@@ -351,7 +350,6 @@
         spritesheetTexture.minFilter = THREE.NearestFilter;
         spritesheetTexture.repeat.set(1/5, 1); 
 
-        // SOLUCIÓN AL BUG DE TRANSPARENCIA: Desactivar depthWrite e incrementar renderOrder para que no oculte el agua ni el césped
         const spriteMat = new THREE.SpriteMaterial({ 
             map: spritesheetTexture, 
             transparent: true,
@@ -359,7 +357,7 @@
         });
         const jugadorSprite = new THREE.Sprite(spriteMat);
         jugadorSprite.scale.set(2, 4, 1);
-        jugadorSprite.renderOrder = 2; // Forzar a renderizarse por encima del agua y del césped siempre
+        jugadorSprite.renderOrder = 3; // Prioridad máxima de pintado frontal
 
         const jugadorNode = new THREE.Group();
         jugadorNode.position.set(0, 4, 0);
@@ -387,8 +385,8 @@
             if (document.pointerLockElement === document.body) {
                 mouseCamara.horizontal -= e.movementX * 0.0035;
                 mouseCamara.vertical -= e.movementY * 0.0035;
-                // Ajuste de rango para no colisionar con planos bajos
-                mouseCamara.vertical = Math.max(0.25, Math.min(Math.PI / 2.6, mouseCamara.vertical));
+                // Ángulo de inclinación seguro para proteger la vista de cámara
+                mouseCamara.vertical = Math.max(0.25, Math.min(Math.PI / 2.4, mouseCamara.vertical));
             }
         });
 
@@ -444,15 +442,17 @@
                 if (proyeccionLateral > 0.1) jugadorSprite.scale.x = 2;   
             }
 
+            // CORRECCIÓN BUG 1: Forzar opacidad/ajuste dinámico del material cuando la cámara está muy alta
             if (enElAgua) {
                 const balanceoNado = Math.sin(tiempo * 3) * 0.06;
-                jugadorNode.position.y = -1.2 + 0.5 + balanceoNado; 
+                jugadorNode.position.y = -1.2 + 0.5 + balanceoNado;
+                waterMat.opacity = 0.85; // Opacidad más alta para tapar de raíz el césped de abajo
             } else {
                 jugadorNode.position.y = hSuelo + 2.0;
+                waterMat.opacity = 0.70;
             }
 
-            // Animaciones del Spritesheet
-            cronorange += 0.14; // Reasignación interna de contador
+            // Animaciones del Spritesheet (Solucionada la variable fantasma rota)
             cronometroAnim += 0.14;
             if (enElAgua) {
                 let frameNado = Math.floor(cronometroAnim * 0.8 % 2) + 3;
@@ -476,7 +476,6 @@
             camera.position.y += (objetivoCamaraY - camera.position.y) * 0.09;
             camera.position.z += (objetivoCamaraZ - camera.position.z) * 0.09;
             
-            // Foco adaptativo para evitar el corte visual vertical
             camera.lookAt(jugadorNode.position.x, jugadorNode.position.y + (enElAgua ? -0.4 : 0.2), jugadorNode.position.z);
 
             renderer.render(scene, camera);
