@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Juego Social HD-2D Profesional - Water Update</title>
+    <title>Juego Social HD-2D Profesional - Engine Pulido</title>
     <style>
         body { margin: 0; overflow: hidden; background-color: #0b0f19; user-select: none; }
         canvas { display: block; }
@@ -44,10 +44,10 @@
     </div>
 
     <div id="interface">
-        <strong style="color: #4cc9f0; font-size: 1.1rem;">PROTOTIPO HD-2D ENGINE V2</strong><br><br>
+        <strong style="color: #4cc9f0; font-size: 1.1rem;">PROTOTIPO HD-2D ENGINE V3</strong><br><br>
         • <strong>Moverse:</strong> W, A, S, D (Relativo a la Cámara)<br>
-        • <strong>Navegación:</strong> Explora los lagos para ver la animación de nado.<br>
-        • <strong>Entorno:</strong> Densidad de árboles aumentada + Físicas de Oleaje.
+        • <strong>Navegación:</strong> Entra a un lago para probar el braceo animado.<br>
+        • <strong>Fijación de Bugs:</strong> Oclusión de cámara y renderizado doble de agua activos.
     </div>
 
     <script type="importmap">
@@ -118,7 +118,7 @@
         terreno.receiveShadow = true;
         scene.add(terreno);
 
-        // Sistema de Lagos Animados
+        // SOLUCIÓN BUG 1: DoubleSide + RenderOrder controlado para evitar parpadeos transparentes bajo el agua
         const waterGeo = new THREE.PlaneGeometry(tamañoMundo, tamañoMundo, 40, 40);
         const waterMat = new THREE.MeshStandardMaterial({ 
             color: 0x1d4ed8, 
@@ -126,7 +126,8 @@
             opacity: 0.8,
             roughness: 0.15,
             metalness: 0.2,
-            flatShading: true
+            flatShading: true,
+            side: THREE.DoubleSide 
         });
         const aguaSuelo = new THREE.Mesh(waterGeo, waterMat);
         aguaSuelo.rotation.x = -Math.PI / 2;
@@ -136,7 +137,7 @@
 
         const posicionOriginalAgua = waterGeo.attributes.position.clone();
 
-        // 4. ENTIDADES DEL MUNDO (MÁS ÁRBOLES Y CASITAS)
+        // 4. ENTIDADES DEL MUNDO (140 ÁRBOLES Y CASITAS)
         const crearArbolEstilizado = (x, z, h) => {
             const grupo = new THREE.Group();
             const escalaAleatoria = 0.8 + Math.random() * 0.5;
@@ -189,7 +190,6 @@
             scene.add(casa);
         };
 
-        // Distribución: ¡Aumentada a 140 árboles!
         for (let i = 0; i < 140; i++) { 
             const x = (Math.random() - 0.5) * 150;
             const z = (Math.random() - 0.5) * 150;
@@ -206,10 +206,10 @@
             }
         }
 
-        // 5. GENERADOR ARTÍSTICO (Pixel-Art: Añadida Ropa, Pelo y Animación de Nado)
+        // 5. GENERADOR ARTÍSTICO MEJORADO (Spritesheet extendido a 5 cuadros)
         function crearSpritesheetFiel() {
             const canvas = document.createElement('canvas');
-            canvas.width = 256; // 4 cuadros de 64x128 píxeles (Idle, Paso1, Paso2, Nadar)
+            canvas.width = 320; // 5 cuadros de 64x128 píxeles (Idle, Paso1, Paso2, Nadar_BrazoIzq, Nadar_BrazoDer)
             canvas.height = 128;
             const ctx = canvas.getContext('2d');
             ctx.imageSmoothingEnabled = false;
@@ -222,121 +222,116 @@
                 const colorCamiseta = '#00b4d8';
                 const colorPantalon = '#242423';
 
-                if (estado === 'nadar') {
-                    // --- ANIMACIÓN DE NADAR (Cuerpo hundido, interactuando con el agua) ---
-                    // Pelo trasero
+                // --- MEJORA 2: NUEVA ANIMACIÓN DE NADAR CON BRAZOS MÓVILES (Ciclos Independientes) ---
+                if (estado === 'nadar1' || estado === 'nadar2') {
                     ctx.fillStyle = colorPelo;
                     ctx.fillRect(offsetX + 14, 34, 36, 16);
 
-                    // Cabeza (flotando un poco más alta que los hombros simulados)
+                    // Cabeza hundida integrada
                     ctx.fillStyle = colorContorno;
                     ctx.fillRect(offsetX + 16, 38, 32, 32);
                     ctx.fillStyle = colorPiel;
                     ctx.fillRect(offsetX + 18, 40, 28, 28);
                     
-                    // Flequillo
                     ctx.fillStyle = colorPelo;
                     ctx.fillRect(offsetX + 16, 38, 32, 8);
                     ctx.fillRect(offsetX + 16, 46, 6, 8);
 
-                    // Rostro asomando en el agua
                     ctx.fillStyle = colorContorno;
-                    ctx.fillRect(offsetX + 24, 50, 4, 6); // Ojo izq
-                    ctx.fillRect(offsetX + 36, 50, 4, 6); // Ojo der
-                    ctx.fillRect(offsetX + 29, 58, 6, 2); // Boca
+                    ctx.fillRect(offsetX + 24, 50, 4, 6); 
+                    ctx.fillRect(offsetX + 36, 50, 4, 6); 
+                    ctx.fillRect(offsetX + 29, 58, 6, 2); 
 
-                    // Brazos abiertos braceando en el agua (Izquierdo y derecho extendidos)
-                    ctx.fillStyle = colorContorno;
-                    ctx.fillRect(offsetX + 4, 66, 12, 8);
-                    ctx.fillRect(offsetX + 48, 66, 12, 8);
-                    ctx.fillStyle = colorCamiseta;
-                    ctx.fillRect(offsetX + 6, 68, 10, 4);
-                    ctx.fillRect(offsetX + 48, 68, 10, 4);
+                    // Dinámica de Brazos en Nado Crol/Libre
+                    if (estado === 'nadar1') {
+                        // Brazo izquierdo arriba/extendido, derecho pegado abajo
+                        ctx.fillStyle = colorContorno;
+                        ctx.fillRect(offsetX + 2, 54, 12, 8);  // Brazo izq arriba contorno
+                        ctx.fillRect(offsetX + 46, 68, 8, 12); // Brazo der abajo contorno
+                        ctx.fillStyle = colorCamiseta;
+                        ctx.fillRect(offsetX + 4, 56, 10, 4);
+                        ctx.fillRect(offsetX + 46, 68, 6, 10);
+                    } else {
+                        // Brazo derecho arriba/extendido, izquierdo pegado abajo
+                        ctx.fillStyle = colorContorno;
+                        ctx.fillRect(offsetX + 48, 54, 12, 8); // Brazo der arriba contorno
+                        ctx.fillRect(offsetX + 10, 68, 8, 12); // Brazo izq abajo contorno
+                        ctx.fillStyle = colorCamiseta;
+                        ctx.fillRect(offsetX + 48, 56, 10, 4);
+                        ctx.fillRect(offsetX + 12, 68, 6, 10);
+                    }
                     return;
                 }
 
-                // --- ESTADOS EN TIERRA (Idle, Caminar) ---
-                // Cabeza Contorno y Base
+                // --- ESTADOS EN TIERRA ---
                 ctx.fillStyle = colorContorno;
                 ctx.fillRect(offsetX + 14, 16, 36, 36);
                 ctx.fillStyle = colorPiel;
                 ctx.fillRect(offsetX + 16, 18, 32, 32);
 
-                // Sombra de volumen cabeza
                 ctx.fillStyle = colorSombraPiel;
                 ctx.fillRect(offsetX + 16, 18, 6, 32);
                 ctx.fillRect(offsetX + 16, 44, 32, 6);
 
-                // NUEVO: Pelo castaño con volumen
                 ctx.fillStyle = colorPelo;
-                ctx.fillRect(offsetX + 14, 14, 36, 10); // Techo del pelo
-                ctx.fillRect(offsetX + 14, 24, 6, 16);  // Lateral izquierdo
-                ctx.fillRect(offsetX + 44, 24, 6, 12);  // Lateral derecho
-                ctx.fillRect(offsetX + 20, 24, 12, 4);   // Flequillo chic
+                ctx.fillRect(offsetX + 14, 14, 36, 10); 
+                ctx.fillRect(offsetX + 14, 24, 6, 16);  
+                ctx.fillRect(offsetX + 44, 24, 6, 12);  
+                ctx.fillRect(offsetX + 20, 24, 12, 4);   
 
-                // Rostro
                 ctx.fillStyle = colorContorno;
                 ctx.fillRect(offsetX + 25, 30, 4, 6); 
                 ctx.fillRect(offsetX + 37, 30, 4, 6); 
                 ctx.fillRect(offsetX + 30, 40, 8, 2); 
 
-                // Cuello
                 ctx.fillStyle = colorContorno;
                 ctx.fillRect(offsetX + 24, 52, 16, 4);
 
-                // NUEVO: Ropa - Torso (Camiseta Azul)
                 ctx.fillStyle = colorContorno;
-                ctx.fillRect(offsetX + 18, 56, 28, 40); // Base de cuerpo
+                ctx.fillRect(offsetX + 18, 56, 28, 40); 
                 ctx.fillStyle = colorCamiseta;
-                ctx.fillRect(offsetX + 20, 58, 24, 26); // Relleno Camiseta
+                ctx.fillRect(offsetX + 20, 58, 24, 26); 
 
-                // NUEVO: Ropa - Pantalones cortos
                 ctx.fillStyle = colorPantalon;
                 ctx.fillRect(offsetX + 20, 84, 24, 10);
 
-                // Sombra de la ropa (Lado izquierdo)
                 ctx.fillStyle = 'rgba(0,0,0,0.15)';
                 ctx.fillRect(offsetX + 20, 58, 5, 36);
 
-                // Brazos con Mangas Cortas
                 ctx.fillStyle = colorContorno;
                 ctx.fillRect(offsetX + 14, 60, 5, 24); 
                 ctx.fillRect(offsetX + 45, 60, 5, 24); 
                 
-                // Relleno manga e inicio de brazo
-                ctx.fillStyle = colorCamiseta; // Manga izquierda
+                ctx.fillStyle = colorCamiseta; 
                 ctx.fillRect(offsetX + 15, 61, 3, 10);
-                ctx.fillRect(offsetX + 46, 61, 3, 10); // Manga derecha
+                ctx.fillRect(offsetX + 46, 61, 3, 10); 
                 
                 ctx.fillStyle = colorSombraPiel; 
-                ctx.fillRect(offsetX + 15, 71, 3, 12); // Brazo piel izq
+                ctx.fillRect(offsetX + 15, 71, 3, 12); 
                 ctx.fillStyle = colorPiel;
-                ctx.fillRect(offsetX + 46, 71, 3, 12); // Brazo piel der
+                ctx.fillRect(offsetX + 46, 71, 3, 12); 
 
-                // Piernas Dinámicas
                 let izqOffsety = 0;
                 let derOffsety = 0;
                 if (estado === 'paso1') { izqOffsety = -4; }
                 if (estado === 'paso2') { derOffsety = -4; }
 
-                // Pierna Izquierda
                 ctx.fillStyle = colorContorno;
                 ctx.fillRect(offsetX + 21, 96 + izqOffsety, 8, 22);
                 ctx.fillStyle = colorSombraPiel; 
                 ctx.fillRect(offsetX + 23, 98 + izqOffsety, 4, 18);
 
-                // Pierna Derecha
                 ctx.fillStyle = colorContorno;
                 ctx.fillRect(offsetX + 35, 96 + derOffsety, 8, 22);
                 ctx.fillStyle = colorPiel;
                 ctx.fillRect(offsetX + 37, 98 + derOffsety, 4, 18);
             }
 
-            // Renderizar los 4 estados en la tira horizontal de la textura
             dibujarCuadroPersonaje(0, 'idle');
             dibujarCuadroPersonaje(64, 'paso1');
             dibujarCuadroPersonaje(128, 'paso2');
-            dibujarCuadroPersonaje(192, 'nadar');
+            dibujarCuadroPersonaje(192, 'nadar1');
+            dibujarCuadroPersonaje(256, 'nadar2');
 
             return new THREE.CanvasTexture(canvas);
         }
@@ -344,7 +339,7 @@
         const spritesheetTexture = crearSpritesheetFiel();
         spritesheetTexture.magFilter = THREE.NearestFilter;
         spritesheetTexture.minFilter = THREE.NearestFilter;
-        spritesheetTexture.repeat.set(1/4, 1); // Ahora son 4 cuadros, dividimos por 4 el encuadre UV
+        spritesheetTexture.repeat.set(1/5, 1); // Dividimos el encuadre UV por 5 frames ahora
 
         const spriteMat = new THREE.SpriteMaterial({ map: spritesheetTexture, transparent: true });
         const jugadorSprite = new THREE.Sprite(spriteMat);
@@ -376,7 +371,8 @@
             if (document.pointerLockElement === document.body) {
                 mouseCamara.horizontal -= e.movementX * 0.0035;
                 mouseCamara.vertical -= e.movementY * 0.0035;
-                mouseCamara.vertical = Math.max(0.05, Math.min(Math.PI / 2.6, mouseCamara.vertical));
+                // BUG 1 CORREGIDO: Evita que el eje de la cámara descienda numéricamente de la línea de agua (0.16 mínimo)
+                mouseCamara.vertical = Math.max(0.16, Math.min(Math.PI / 2.6, mouseCamara.vertical));
             }
         });
 
@@ -391,19 +387,17 @@
 
             const tiempo = performance.now() * 0.002;
 
-            // --- FÍSICAS DE OLEAJE DE AGUA SIMULADAS ---
+            // Físicas de Oleaje
             const posicionAgua = waterGeo.attributes.position;
             for (let i = 0; i < posicionAgua.count; i++) {
                 const u = posicionOriginalAgua.getX(i);
                 const v = posicionOriginalAgua.getY(i);
-                // Onda compleja matemática para deformar la malla en tiempo real
                 const zMod = Math.sin(u * 0.1 + tiempo) * Math.cos(v * 0.1 + tiempo) * 0.15 + Math.sin(u * 0.05 - tiempo) * 0.1;
                 posicionAgua.setZ(i, zMod);
             }
             waterGeo.computeVertexNormals();
             posicionAgua.needsUpdate = true;
 
-            // Vectores de movimiento respecto a la cámara
             let vectorDireccion = new THREE.Vector3();
             let camaraFrente = new THREE.Vector3();
             let camaraDerecha = new THREE.Vector3();
@@ -420,12 +414,10 @@
             if (teclas.a) { vectorDireccion.add(camaraDerecha.clone().negate()); estaCaminando = true; }
             if (teclas.d) { vectorDireccion.add(camaraDerecha); estaCaminando = true; }
 
-            // Comprobación de físicas y estado del agua
             const hSuelo = obtenerAlturaTerreno(jugadorNode.position.x, jugadorNode.position.z);
-            const enElAgua = hSuelo < -1.2; // Altura de la superficie del agua fija
+            const enElAgua = hSuelo < -1.2; 
             
-            // Variación de velocidad adaptativa (Fricción en el agua)
-            const velocidadActual = enElAgua ? 0.09 : 0.2; 
+            const velocidadActual = enElAgua ? 0.08 : 0.2; 
 
             if (estaCaminando) {
                 vectorDireccion.normalize();
@@ -436,34 +428,29 @@
                 if (proyeccionLateral > 0.1) jugadorSprite.scale.x = 2;   
             }
 
-            // Control de altura física del jugador
             if (enElAgua) {
-                // El jugador flota en el agua (Nivel del mar + sutil balanceo)
-                const balanceoNado = Math.sin(tiempo * 3) * 0.08;
-                jugadorNode.position.y = -1.2 + 0.8 + balanceoNado; 
+                const balanceoNado = Math.sin(tiempo * 3) * 0.06;
+                jugadorNode.position.y = -1.2 + 0.6 + balanceoNado; 
             } else {
-                // El jugador camina sobre las colinas normales
                 jugadorNode.position.y = hSuelo + 2.0;
             }
 
-            // --- MÁQUINA DE ESTADOS Y ANIMACIÓN DEL SPRITE ---
+            // --- ANIMACIÓN AVANZADA ---
             cronometroAnim += 0.14;
             if (enElAgua) {
-                // Estado 3: Frame de Nadar (offset x = 3/4)
-                spritesheetTexture.offset.x = 3 / 4;
-                jugadorSprite.position.y = 0; // Controlado por el nodo global de flotación
+                // Al nadar alterna dinámicamente entre frame 3 (offset 3/5) y frame 4 (offset 4/5) para mover los brazos
+                let frameNado = Math.floor(cronometroAnim * 0.8 % 2) + 3;
+                spritesheetTexture.offset.x = frameNado / 5;
             } else if (estaCaminando) {
-                // Ciclo alterno entre frame 1 y frame 2
                 let frameId = Math.floor(cronometroAnim % 2) + 1;
-                spritesheetTexture.offset.x = frameId / 4;
+                spritesheetTexture.offset.x = frameId / 5;
                 jugadorSprite.position.y = Math.abs(Math.sin(cronometroAnim * 1.5)) * 0.08; 
             } else {
-                // Estado 0: Idle estático
                 spritesheetTexture.offset.x = 0.0;
                 jugadorSprite.position.y = Math.sin(cronometroAnim * 0.25) * 0.03; 
             }
 
-            // ÓRBITA SUAVE DE CÁMARA CON MOUSE LOOK
+            // Órbitación de la cámara
             const radioCamara = 11;
             const objetivoCamaraX = jugadorNode.position.x + radioCamara * Math.sin(mouseCamara.horizontal) * Math.cos(mouseCamara.vertical);
             const objetivoCamaraY = jugadorNode.position.y + radioCamara * Math.sin(mouseCamara.vertical);
@@ -473,7 +460,7 @@
             camera.position.y += (objetivoCamaraY - camera.position.y) * 0.09;
             camera.position.z += (objetivoCamaraZ - camera.position.z) * 0.09;
             
-            camera.lookAt(jugadorNode.position.x, jugadorNode.position.y + (enElAgua ? 0.1 : 0.5), jugadorNode.position.z);
+            camera.lookAt(jugadorNode.position.x, jugadorNode.position.y + (enElAgua ? -0.2 : 0.5), jugadorNode.position.z);
 
             renderer.render(scene, camera);
         }
